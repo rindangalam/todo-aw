@@ -1,0 +1,56 @@
+name: todoaw
+description: A full-featured offline-first todo app.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=2.18.0 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+
+  # State Management
+  flutter_riverpod: ^2.3.0
+
+  # Routing
+  go_router: ^6.0.0
+
+  # Database
+  sqflite: ^2.2.0
+
+  # Notifications
+  flutter_local_notifications: ^13.0.0
+
+  # Fonts
+  google_fonts: ^4.0.0
+
+  # Utilities
+  uuid: ^3.0.0
+  intl: ^0.18.0
+  path_provider: ^2.0.0
+  path: ^1.8.0
+  shared_preferences: ^2.0.0
+  # (export via file save — share_plus removed due to AGP incompatibility)
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+  sqflite_common_ffi: ^2.1.0
+  mocktail: ^0.3.0
+  flutter_launcher_icons: ^0.10.0
+  image: ^3.0.0
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+
+flutter:
+  uses-material-design: true
+
+

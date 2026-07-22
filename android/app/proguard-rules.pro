@@ -1,0 +1,2 @@
+-keep class org.kxml2.** { *; }
+-dontwarn org.kxml2.**
