@@ -12,6 +12,10 @@ final noteListProvider =
   return NoteListNotifier(ref.read(noteRepositoryProvider));
 });
 
+final archivedNoteListProvider = FutureProvider<List<Note>>((ref) {
+  return ref.read(noteRepositoryProvider).getArchived();
+});
+
 class NoteListNotifier extends StateNotifier<AsyncValue<List<Note>>> {
   final NoteRepository _repository;
 
@@ -28,16 +32,20 @@ class NoteListNotifier extends StateNotifier<AsyncValue<List<Note>>> {
     required String title,
     String? content,
     int color = 0xFFFDE68A,
+    bool isPinned = false,
   }) async {
-    await _repository.create(title: title, content: content, color: color);
+    await _repository.create(
+      title: title,
+      content: content,
+      color: color,
+      isPinned: isPinned,
+    );
     await load();
   }
 
   Future<void> update(Note note) async {
     state = AsyncValue.data(
-      (state.value ?? [])
-          .map((n) => n.uuid == note.uuid ? note : n)
-          .toList(),
+      (state.value ?? []).map((n) => n.uuid == note.uuid ? note : n).toList(),
     );
     await _repository.update(note);
     await load();

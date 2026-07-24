@@ -5,6 +5,7 @@ import '../../core/constants.dart';
 import '../../core/l10n/strings.dart';
 import '../../data/models/category.dart';
 import '../../providers/category_provider.dart';
+import '../widgets/error_state.dart';
 
 class CategoriesScreen extends ConsumerStatefulWidget {
   const CategoriesScreen({super.key});
@@ -50,16 +51,16 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(S.categoryHapus),
-        content: Text(S.categoryHapusDesc),
+        title: const Text(S.categoryHapus),
+        content: const Text(S.categoryHapusDesc),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(S.batal),
+            child: const Text(S.batal),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(S.hapus),
+            child: const Text(S.hapus),
           ),
         ],
       ),
@@ -74,7 +75,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
     final categoriesAsync = ref.watch(categoryListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(S.categoryTitle)),
+      appBar: AppBar(title: const Text(S.categoryTitle)),
       body: Column(
         children: [
           Padding(
@@ -85,7 +86,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                   child: TextField(
                     controller: _nameController,
                     maxLength: AppConstants.categoryNameMaxLength,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: S.categoryBaru,
                       border: OutlineInputBorder(),
                       contentPadding:
@@ -131,10 +132,13 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
           Expanded(
             child: categoriesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => ErrorState(
+                detail: e.toString(),
+                onRetry: () => ref.read(categoryListProvider.notifier).load(),
+              ),
               data: (categories) {
                 if (categories.isEmpty) {
-                  return Center(
+                  return const Center(
                     child: Text(S.categoryKosong),
                   );
                 }

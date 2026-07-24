@@ -5,6 +5,7 @@ import '../../core/constants.dart';
 import '../../core/l10n/strings.dart';
 import '../../data/models/task.dart';
 import '../../providers/task_list_provider.dart';
+import '../widgets/error_state.dart';
 
 final trashListProvider = FutureProvider<List<Task>>((ref) {
   return ref.read(taskRepositoryProvider).getTrashed();
@@ -20,7 +21,7 @@ class TrashScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(S.trashTitle),
+        title: const Text(S.trashTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_sweep),
@@ -31,7 +32,10 @@ class TrashScreen extends ConsumerWidget {
       ),
       body: trashAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => ErrorState(
+          detail: e.toString(),
+          onRetry: () => ref.refresh(trashListProvider),
+        ),
         data: (tasks) {
           if (tasks.isEmpty) {
             return Center(
@@ -105,7 +109,7 @@ class TrashScreen extends ConsumerWidget {
                           children: [
                             IconButton(
                               icon: const Icon(Icons.restore),
-                                tooltip: S.trashKembalikan,
+                              tooltip: S.trashKembalikan,
                               onPressed: () async {
                                 await ref
                                     .read(taskRepositoryProvider)
@@ -116,7 +120,7 @@ class TrashScreen extends ConsumerWidget {
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete_forever),
-                                tooltip: S.trashHapusPermanen,
+                              tooltip: S.trashHapusPermanen,
                               onPressed: () =>
                                   _permanentDelete(context, ref, task),
                             ),
@@ -138,16 +142,16 @@ class TrashScreen extends ConsumerWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(S.trashKonfirmasiHapus),
-        content: Text(S.trashKonfirmasiHapusDesc),
+        title: const Text(S.trashKonfirmasiHapus),
+        content: const Text(S.trashKonfirmasiHapusDesc),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(S.batal),
+            child: const Text(S.batal),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(S.hapus),
+            child: const Text(S.hapus),
           ),
         ],
       ),
@@ -163,16 +167,16 @@ class TrashScreen extends ConsumerWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(S.trashKonfirmasiKosongkan),
-        content: Text(S.trashKonfirmasiKosongkanDesc),
+        title: const Text(S.trashKonfirmasiKosongkan),
+        content: const Text(S.trashKonfirmasiKosongkanDesc),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(S.batal),
+            child: const Text(S.batal),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(S.trashKosongkan),
+            child: const Text(S.trashKosongkan),
           ),
         ],
       ),

@@ -97,8 +97,9 @@ class HabitRepository {
       checkDate = checkDate.subtract(const Duration(days: 1));
     }
 
-    final longestStreak =
-        currentStreak > habit.longestStreak ? currentStreak : habit.longestStreak;
+    final longestStreak = currentStreak > habit.longestStreak
+        ? currentStreak
+        : habit.longestStreak;
 
     await AppDatabase.updateHabit(habit.copyWith(
       currentStreak: currentStreak,

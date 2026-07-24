@@ -50,7 +50,7 @@ class NotificationService {
 
     try {
       await _plugin.schedule(
-        id.hashCode,
+        (id.hashCode & 0x7FFFFFFF),
         title,
         body,
         scheduledDate,
@@ -60,7 +60,7 @@ class NotificationService {
   }
 
   static Future<void> cancelNotification(String id) async {
-    await _plugin.cancel(id.hashCode);
+    await _plugin.cancel(id.hashCode & 0x7FFFFFFF);
   }
 
   static Future<void> cancelAll() async {

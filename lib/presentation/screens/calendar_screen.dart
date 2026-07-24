@@ -5,20 +5,43 @@ import '../../core/l10n/strings.dart';
 import '../../data/models/task.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/task_list_provider.dart';
+import '../widgets/error_state.dart';
 import '../widgets/task_card.dart';
 import 'task_form_screen.dart';
 
 const _idnDayShort = [
-  'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min',
+  'Sen',
+  'Sel',
+  'Rab',
+  'Kam',
+  'Jum',
+  'Sab',
+  'Min',
 ];
 
 const _idnDayFull = [
-  'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu',
+  'Senin',
+  'Selasa',
+  'Rabu',
+  'Kamis',
+  'Jumat',
+  'Sabtu',
+  'Minggu',
 ];
 
 const _idnMonths = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  'Januari',
+  'Februari',
+  'Maret',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Agustus',
+  'September',
+  'Oktober',
+  'November',
+  'Desember',
 ];
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -112,7 +135,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ),
         child: tasksAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('${S.error}: $e')),
+          error: (e, _) => ErrorState(
+            detail: e.toString(),
+            onRetry: () => ref.read(taskListProvider.notifier).load(),
+          ),
           data: (tasks) {
             final taskDates = _dateSet(tasks);
             return SafeArea(
@@ -221,8 +247,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       : null,
               borderRadius: BorderRadius.circular(10),
               border: isToday && !isSel
-                  ? Border.all(
-                      color: theme.colorScheme.primary, width: 1.5)
+                  ? Border.all(color: theme.colorScheme.primary, width: 1.5)
                   : null,
             ),
             child: Column(
@@ -232,9 +257,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 Text(
                   '${day.day}',
                   style: TextStyle(
-                    fontWeight: isSel || isToday
-                        ? FontWeight.w700
-                        : FontWeight.w400,
+                    fontWeight:
+                        isSel || isToday ? FontWeight.w700 : FontWeight.w400,
                     fontSize: 13,
                     color: isSel
                         ? Colors.white
@@ -249,8 +273,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     height: 4,
                     margin: const EdgeInsets.only(top: 2),
                     decoration: BoxDecoration(
-                      color:
-                          isSel ? Colors.white : theme.colorScheme.primary,
+                      color: isSel ? Colors.white : theme.colorScheme.primary,
                       shape: BoxShape.circle,
                     ),
                   )
@@ -379,21 +402,23 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  children: dayTasks.map((task) => TaskCard(
-                        task: task,
-                        categoryColor: task.categoryId != null
-                            ? Color(
-                                categoryColors[task.categoryId] ?? 0xFF9CA3AF)
-                            : null,
-                        onTap: () =>
-                            showTaskFormSheet(context, taskId: task.uuid),
-                        onToggle: (_) => ref
-                            .read(taskListProvider.notifier)
-                            .toggleComplete(task),
-                        onDismiss: () => ref
-                            .read(taskListProvider.notifier)
-                            .softDelete(task),
-                      )).toList(),
+                  children: dayTasks
+                      .map((task) => TaskCard(
+                            task: task,
+                            categoryColor: task.categoryId != null
+                                ? Color(categoryColors[task.categoryId] ??
+                                    0xFF9CA3AF)
+                                : null,
+                            onTap: () =>
+                                showTaskFormSheet(context, taskId: task.uuid),
+                            onToggle: (_) => ref
+                                .read(taskListProvider.notifier)
+                                .toggleComplete(task),
+                            onDismiss: () => ref
+                                .read(taskListProvider.notifier)
+                                .softDelete(task),
+                          ))
+                      .toList(),
                 ),
               ],
             ),

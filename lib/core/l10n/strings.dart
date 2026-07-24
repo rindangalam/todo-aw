@@ -3,7 +3,13 @@ class S {
 
   // App
   static const String appName = 'Todoaw';
-  static const String appTagline = 'Atur hidupmu';
+  static const String appTagline = 'Jadi lebih teratur';
+
+  static const String settingsMuatContohData = 'Muat Contoh Data';
+  static const String settingsDataContohBerhasil =
+      'Data contoh udah siap';
+
+  static const String seedBerhasil = 'Contoh data berhasil ditambahkan';
 
   // Navigation
   static const String navBeranda = 'Beranda';
@@ -22,11 +28,11 @@ class S {
   static const String homeTugasHariIni = 'tugas hari ini';
   static const String homeSelesai = 'selesai';
   static const String homeTersisa = 'tersisa';
-  static const String homeProgressMingguan = 'Progress Mingguan';
+  static const String homeDaftarTugas = 'Daftar Tugas';
   static const String homeStreak = 'hari streak';
-  static const String homeTidakAdaTugas = 'Belum ada tugas hari ini';
-  static const String homeSemuaSelesai = 'Semua tugas hari ini selesai 🎉';
-  static const String homeBuatTugasPertama = 'Buat tugas pertamamu sekarang';
+  static const String homeTidakAdaTugas = 'Hari ini santai?';
+  static const String homeSemuaSelesai = 'Semua beres hari ini 🎉';
+  static const String homeBuatTugasPertama = 'Yuk, bikin tugas pertama';
 
   // Quick Actions
   static const String quickTambahTugas = 'Tambah Tugas';
@@ -52,6 +58,12 @@ class S {
   static const String taskHapus = 'Hapus Tugas';
   static const String taskSimpan = 'Simpan';
   static const String taskBatal = 'Batal';
+  static const String taskSimpanSebagaiTemplate = 'Simpan sebagai Template';
+  static const String taskDisimpanSebagaiTemplate = 'Disimpan sebagai template';
+
+  static const String templatePilih = 'Pilih Template';
+  static const String templateBelumAda = 'Belum ada template';
+  static const String quickDariTemplate = 'Dari Template';
 
   static const String taskBaru = 'Tugas Baru';
   static const String taskEdit = 'Edit Tugas';
@@ -92,7 +104,7 @@ class S {
   static const String filterTampilkanArsip = 'Tampilkan arsip';
   static const String filterTerapkan = 'Terapkan';
   static const String filterTidakCocok = 'Tidak ada tugas yang cocok';
-  static const String filterUbahFilter = 'Coba ubah filter kamu';
+  static const String filterUbahFilter = 'Coba atur ulang filter';
 
   // Stats / Dashboard
   static const String dashboardTitle = 'Dashboard';
@@ -106,7 +118,8 @@ class S {
   static const String dashboardTargetMingguan = 'Target Mingguan';
   static const String dashboardJamFokus = 'Jam Fokus';
   static const String dashboardBelumAdaData = 'Belum ada data';
-  static const String dashboardSelesaikanTugas = 'Selesaikan tugas untuk melihat statistik';
+  static const String dashboardSelesaikanTugas =
+      'Selesaikan tugas untuk melihat statistik';
 
   // Habit
   static const String habitTitle = 'Kebiasaan';
@@ -139,16 +152,27 @@ class S {
   // Notes
   static const String notesTitle = 'Catatan';
   static const String notesBaru = 'Catatan Baru';
+  static const String notesEdit = 'Edit Catatan';
   static const String notesTitleHint = 'Judul catatan';
   static const String notesContentHint = 'Mulai menulis...';
   static const String notesKosong = 'Belum ada catatan';
   static const String notesBuatPertama = 'Buat catatan pertamamu';
   static const String notesDisematkan = 'Disematkan';
+  static const String notesPin = 'Sematkan';
+  static const String notesLepasPin = 'Lepas sematan';
+  static const String notesHapus = 'Hapus Catatan';
+  static const String notesKonfirmasiHapus = 'Hapus catatan ini?';
+  static const String notesKonfirmasiHapusDesc =
+      'Catatan akan dipindahkan ke tempat sampah.';
+  static const String notesSematkanDiForm = 'Sematkan';
 
   // Settings
   static const String settingsTitle = 'Pengaturan';
   static const String settingsTampilan = 'TAMPILAN';
   static const String settingsModeGelap = 'Mode Gelap';
+  static const String settingsModeSystem = 'Sistem';
+  static const String settingsModeLight = 'Terang';
+  static const String settingsModeDark = 'Gelap';
   static const String settingsData = 'DATA';
   static const String settingsBackup = 'Backup Data';
   static const String settingsRestore = 'Pulihkan Data';
@@ -165,16 +189,19 @@ class S {
   // Trash
   static const String trashTitle = 'Tempat Sampah';
   static const String trashKosong = 'Tempat sampah kosong';
-  static const String trashAutoDelete = 'Tugas akan otomatis dihapus setelah 30 hari';
+  static const String trashAutoDelete =
+      'Tugas akan otomatis dihapus setelah 30 hari';
   static const String trashKembalikan = 'Kembalikan';
   static const String trashHapusPermanen = 'Hapus Permanen';
   static const String trashHapusSemua = 'Kosongkan Semua';
   static const String trashHariLagii = 'hari lagi';
   static const String trashAkanDihapus = 'Akan segera dihapus';
   static const String trashKonfirmasiHapus = 'Hapus permanen?';
-  static const String trashKonfirmasiHapusDesc = 'Tindakan ini tidak bisa dibatalkan.';
+  static const String trashKonfirmasiHapusDesc =
+      'Tindakan ini tidak bisa dibatalkan.';
   static const String trashKonfirmasiKosongkan = 'Kosongkan tempat sampah?';
-  static const String trashKonfirmasiKosongkanDesc = 'Semua tugas akan dihapus permanen.';
+  static const String trashKonfirmasiKosongkanDesc =
+      'Semua tugas akan dihapus permanen.';
   static const String trashBatal = 'Batal';
   static const String trashHapus = 'Hapus';
   static const String trashKosongkan = 'Kosongkan';
@@ -184,7 +211,8 @@ class S {
   static const String categoryBaru = 'Kategori baru';
   static const String categoryNama = 'Nama kategori';
   static const String categoryHapus = 'Hapus kategori?';
-  static const String categoryHapusDesc = 'Tugas dengan kategori ini akan kehilangan kategorinya.';
+  static const String categoryHapusDesc =
+      'Tugas dengan kategori ini akan kehilangan kategorinya.';
   static const String categoryKosong = 'Belum ada kategori';
 
   // General Actions
@@ -224,7 +252,7 @@ class S {
 
   // Empty states
   static const String emptyTidakAda = 'Tidak ada';
-  static const String emptyCobaUbah = 'Coba ubah pencarian atau filter kamu';
+  static const String emptyCobaUbah = 'Coba ganti pencarian atau filter';
 
   // Pomodoro durations
   static const String fokus25 = '25 Menit';

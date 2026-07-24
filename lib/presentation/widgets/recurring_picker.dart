@@ -47,7 +47,7 @@ class RecurringPicker extends StatelessWidget {
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.remove_circle_outline),
-              label: Text(S.repeatHapus),
+              label: const Text(S.repeatHapus),
               style: TextButton.styleFrom(foregroundColor: Colors.red),
             ),
           ],

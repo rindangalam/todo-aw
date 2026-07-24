@@ -6,16 +6,11 @@ import '../../core/l10n/strings.dart';
 import '../../providers/note_provider.dart';
 
 Future<void> showNoteFormSheet(BuildContext context, {String? noteId}) {
-  return showModalBottomSheet(
+  return showDialog(
     context: context,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(RadiusTokens.lg)),
-    ),
-    builder: (_) => ProviderScope(
-      overrides: const [],
-      child: NoteFormSheet(noteId: noteId),
-    ),
+    useSafeArea: false,
+    barrierDismissible: false,
+    builder: (_) => NoteFormSheet(noteId: noteId),
   );
 }
 
@@ -33,6 +28,7 @@ class _NoteFormSheetState extends ConsumerState<NoteFormSheet> {
   final _contentController = TextEditingController();
   bool _loading = true;
   int _selectedColor = 0xFFFDE68A;
+  bool _isPinned = false;
 
   static const _colors = [
     0xFFFDE68A,
@@ -42,6 +38,8 @@ class _NoteFormSheetState extends ConsumerState<NoteFormSheet> {
     0xFFFECACA,
     0xFFE2E8F0,
   ];
+
+  bool get _isEditing => widget.noteId != null;
 
   @override
   void initState() {
@@ -57,6 +55,7 @@ class _NoteFormSheetState extends ConsumerState<NoteFormSheet> {
         _titleController.text = note.title;
         _contentController.text = note.content ?? '';
         _selectedColor = note.color;
+        _isPinned = note.isPinned;
       }
     }
     if (mounted) setState(() => _loading = false);
@@ -75,89 +74,126 @@ class _NoteFormSheetState extends ConsumerState<NoteFormSheet> {
     final bottom = MediaQuery.of(context).viewInsets.bottom;
 
     if (_loading) {
-      return const SizedBox(
-        height: 200,
+      return const Material(
         child: Center(child: CircularProgressIndicator()),
       );
     }
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20, 12, 20, bottom + 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _titleController,
-            decoration: InputDecoration(
-              hintText: S.notesTitleHint,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(RadiusTokens.sm),
-              ),
-              filled: true,
-              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-            ),
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _contentController,
-            maxLines: 5,
-            minLines: 3,
-            decoration: InputDecoration(
-              hintText: S.notesContentHint,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(RadiusTokens.sm),
-              ),
-              filled: true,
-              fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
+    return Material(
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(20, 8, 20, bottom + 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ..._colors.map((c) => GestureDetector(
-                    onTap: () => setState(() => _selectedColor = c),
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        color: Color(c),
-                        shape: BoxShape.circle,
-                        border: _selectedColor == c
-                            ? Border.all(
-                                color: theme.colorScheme.primary, width: 2.5)
-                            : null,
-                      ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  Text(
+                    _isEditing ? S.notesEdit : S.notesBaru,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
-                  )),
+                  ),
+                  const SizedBox(width: 48),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _titleController,
+                decoration: InputDecoration(
+                  hintText: S.notesTitleHint,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(RadiusTokens.sm),
+                  ),
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                ),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: TextField(
+                  controller: _contentController,
+                  maxLines: null,
+                  expands: true,
+                  textAlignVertical: TextAlignVertical.top,
+                  decoration: InputDecoration(
+                    hintText: S.notesContentHint,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(RadiusTokens.sm),
+                    ),
+                    filled: true,
+                    fillColor:
+                        theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  ..._colors.map((c) => GestureDetector(
+                        onTap: () => setState(() => _selectedColor = c),
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            color: Color(c),
+                            shape: BoxShape.circle,
+                            border: _selectedColor == c
+                                ? Border.all(
+                                    color: theme.colorScheme.primary,
+                                    width: 2.5)
+                                : null,
+                          ),
+                        ),
+                      )),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(
+                    Icons.push_pin,
+                    size: 18,
+                    color: _isPinned
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    S.notesSematkanDiForm,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                  const Spacer(),
+                  Switch(
+                    value: _isPinned,
+                    onChanged: (v) => setState(() => _isPinned = v),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _save,
+                  child: Text(
+                    _isEditing ? S.simpan : S.tambah,
+                  ),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _save,
-              child: Text(
-                widget.noteId != null ? S.simpan : S.tambah,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -167,7 +203,7 @@ class _NoteFormSheetState extends ConsumerState<NoteFormSheet> {
     if (title.isEmpty) return;
 
     final content = _contentController.text.trim();
-    if (widget.noteId != null) {
+    if (_isEditing) {
       final existing =
           await ref.read(noteRepositoryProvider).getById(widget.noteId!);
       if (existing != null) {
@@ -176,6 +212,7 @@ class _NoteFormSheetState extends ConsumerState<NoteFormSheet> {
                 title: title,
                 content: content.isEmpty ? null : content,
                 color: _selectedColor,
+                isPinned: _isPinned,
               ),
             );
       }
@@ -184,6 +221,7 @@ class _NoteFormSheetState extends ConsumerState<NoteFormSheet> {
             title: title,
             content: content.isEmpty ? null : content,
             color: _selectedColor,
+            isPinned: _isPinned,
           );
     }
     if (mounted) Navigator.of(context).pop();

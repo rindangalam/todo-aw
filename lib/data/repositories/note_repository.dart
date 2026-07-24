@@ -14,6 +14,7 @@ class NoteRepository {
     required String title,
     String? content,
     int color = 0xFFFDE68A,
+    bool isPinned = false,
   }) async {
     final now = DateTime.now();
     final note = Note(
@@ -21,6 +22,7 @@ class NoteRepository {
       title: title,
       content: content,
       color: color,
+      isPinned: isPinned,
       createdAt: now,
       updatedAt: now,
     );
@@ -37,4 +39,6 @@ class NoteRepository {
   }
 
   Future<List<Note>> search(String query) => AppDatabase.searchNotes(query);
+
+  Future<List<Note>> getArchived() => AppDatabase.getArchivedNotes();
 }

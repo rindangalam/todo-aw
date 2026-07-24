@@ -7,26 +7,34 @@ class NoteCard extends StatelessWidget {
   final Note note;
   final VoidCallback? onTap;
   final VoidCallback? onTogglePin;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onDismiss;
 
   const NoteCard({
     super.key,
     required this.note,
     this.onTap,
     this.onTogglePin,
+    this.onLongPress,
+    this.onDismiss,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bgColor = Color(note.color).withOpacity(0.3);
+    final isDark = theme.brightness == Brightness.dark;
+    final bgColor =
+        Color(note.color).withOpacity(isDark ? 0.25 : 0.65);
 
-    return Card(
+    final card = Card(
+      elevation: 1,
       color: bgColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -80,5 +88,42 @@ class NoteCard extends StatelessWidget {
         ),
       ),
     );
+
+    if (onDismiss != null) {
+      return Dismissible(
+        key: ValueKey('note-${note.uuid}'),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.archive, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'Arsip',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+        confirmDismiss: (_) async {
+          onDismiss?.call();
+          return false;
+        },
+        child: card,
+      );
+    }
+
+    return card;
   }
 }

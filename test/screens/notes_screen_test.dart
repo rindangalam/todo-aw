@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:todoaw/core/l10n/strings.dart';
-import 'package:todoaw/core/theme.dart';
+import 'package:todoaw/core/design/light_theme.dart';
 import 'package:todoaw/data/models/note.dart';
 import 'package:todoaw/providers/note_provider.dart';
 import 'package:todoaw/data/repositories/note_repository.dart';
@@ -15,7 +15,7 @@ Widget createTestApp({
   required NoteRepository noteRepo,
 }) {
   return MaterialApp(
-    theme: AppTheme.light,
+    theme: LightTheme.theme,
     home: ProviderScope(
       overrides: [
         noteRepositoryProvider.overrideWithValue(noteRepo),

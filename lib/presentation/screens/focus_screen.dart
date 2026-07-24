@@ -40,7 +40,12 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                     color: theme.colorScheme.onSurface.withOpacity(0.5),
                   ),
                 ),
-                error: (_, __) => const SizedBox(),
+                error: (_, __) => Text(
+                  '${S.focusHariIni}: -- ${S.focusMenit}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                ),
                 loading: () => const SizedBox(),
               ),
               const SizedBox(height: 32),
@@ -56,8 +61,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                                 (focusState.durationMinutes * 60)
                         : 0,
                     color: theme.colorScheme.primary,
-                    backgroundColor:
-                        theme.colorScheme.primary.withOpacity(0.1),
+                    backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
                   ),
                   child: Center(
                     child: Column(
@@ -78,8 +82,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                                   ? S.focusHariIni
                                   : '',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface
-                                .withOpacity(0.5),
+                            color: theme.colorScheme.onSurface.withOpacity(0.5),
                           ),
                         ),
                       ],
@@ -119,27 +122,24 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                         icon: Icons.play_arrow,
                         label: S.focusLanjutkan,
                         color: ColorTokens.success,
-                        onPressed: () => ref
-                            .read(focusSessionProvider.notifier)
-                            .resume(),
+                        onPressed: () =>
+                            ref.read(focusSessionProvider.notifier).resume(),
                       )
                     else
                       _ControlButton(
                         icon: Icons.pause,
                         label: S.focusJeda,
                         color: ColorTokens.warning,
-                        onPressed: () => ref
-                            .read(focusSessionProvider.notifier)
-                            .pause(),
+                        onPressed: () =>
+                            ref.read(focusSessionProvider.notifier).pause(),
                       ),
                     const SizedBox(width: 16),
                     _ControlButton(
                       icon: Icons.stop,
                       label: S.batal,
                       color: ColorTokens.danger,
-                      onPressed: () => ref
-                          .read(focusSessionProvider.notifier)
-                          .stop(),
+                      onPressed: () =>
+                          ref.read(focusSessionProvider.notifier).stop(),
                     ),
                   ],
                 ),
@@ -151,16 +151,13 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     );
   }
 
-  Widget _buildStartButton(
-      ThemeData theme, AsyncValue<List<Task>> tasksAsync) {
+  Widget _buildStartButton(ThemeData theme, AsyncValue<List<Task>> tasksAsync) {
     return Column(
       children: [
         SizedBox(
           width: 200,
           child: ElevatedButton(
-            onPressed: () => ref
-                .read(focusSessionProvider.notifier)
-                .start(),
+            onPressed: () => ref.read(focusSessionProvider.notifier).start(),
             style: ElevatedButton.styleFrom(
               backgroundColor: ColorTokens.primary,
               foregroundColor: Colors.white,

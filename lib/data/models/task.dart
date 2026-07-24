@@ -15,6 +15,7 @@ class Task {
   final DateTime? deletedAt;
   final int? reminderMinutes;
   final int? estimatedMinutes;
+  final bool isTemplate;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -33,6 +34,7 @@ class Task {
     this.deletedAt,
     this.reminderMinutes,
     this.estimatedMinutes,
+    this.isTemplate = false,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -52,6 +54,7 @@ class Task {
     DateTime? deletedAt,
     int? reminderMinutes,
     int? estimatedMinutes,
+    bool? isTemplate,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -70,6 +73,7 @@ class Task {
       deletedAt: deletedAt ?? this.deletedAt,
       reminderMinutes: reminderMinutes ?? this.reminderMinutes,
       estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
+      isTemplate: isTemplate ?? this.isTemplate,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -91,6 +95,7 @@ class Task {
       'deletedAt': deletedAt?.toIso8601String(),
       'reminderMinutes': reminderMinutes,
       'estimatedMinutes': estimatedMinutes,
+      'isTemplate': isTemplate ? 1 : 0,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -116,6 +121,7 @@ class Task {
           : null,
       reminderMinutes: map['reminderMinutes'] as int?,
       estimatedMinutes: map['estimatedMinutes'] as int?,
+      isTemplate: (map['isTemplate'] as int?) == 1,
       createdAt: DateTime.parse(map['createdAt'] as String),
       updatedAt: DateTime.parse(map['updatedAt'] as String),
     );

@@ -11,12 +11,10 @@ Future<void> showHabitFormSheet(BuildContext context, {String? habitId}) {
     context: context,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(RadiusTokens.lg)),
+      borderRadius:
+          BorderRadius.vertical(top: Radius.circular(RadiusTokens.lg)),
     ),
-    builder: (_) => ProviderScope(
-      overrides: const [],
-      child: HabitFormSheet(habitId: habitId),
-    ),
+    builder: (_) => HabitFormSheet(habitId: habitId),
   );
 }
 
@@ -132,8 +130,8 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
           Row(
             children: [
               Text(S.habitFrekuensi,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600)),
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(width: 12),
               DropdownButton<HabitFrequency>(
                 value: _frequency,
@@ -155,8 +153,8 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
           Row(
             children: [
               Text(S.habitTarget,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600)),
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(fontWeight: FontWeight.w600)),
               const SizedBox(width: 12),
               _CounterButton(
                 value: _targetCount,
@@ -166,22 +164,24 @@ class _HabitFormSheetState extends ConsumerState<HabitFormSheet> {
           ),
           const SizedBox(height: 12),
           Row(
-            children: _colors.map((c) => GestureDetector(
-                  onTap: () => setState(() => _selectedColor = c),
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    margin: const EdgeInsets.only(right: 8),
-                    decoration: BoxDecoration(
-                      color: Color(c),
-                      shape: BoxShape.circle,
-                      border: _selectedColor == c
-                          ? Border.all(
-                              color: theme.colorScheme.primary, width: 2.5)
-                          : null,
-                    ),
-                  ),
-                )).toList(),
+            children: _colors
+                .map((c) => GestureDetector(
+                      onTap: () => setState(() => _selectedColor = c),
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color: Color(c),
+                          shape: BoxShape.circle,
+                          border: _selectedColor == c
+                              ? Border.all(
+                                  color: theme.colorScheme.primary, width: 2.5)
+                              : null,
+                        ),
+                      ),
+                    ))
+                .toList(),
           ),
           const SizedBox(height: 16),
           SizedBox(

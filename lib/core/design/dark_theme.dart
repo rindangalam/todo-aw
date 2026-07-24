@@ -6,10 +6,10 @@ import 'typography.dart';
 class DarkTheme {
   DarkTheme._();
 
-  static ThemeData get theme => ThemeData(
+  static ThemeData theme({Color accent = const Color(0xFF0EA5E9)}) => ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        colorSchemeSeed: ColorTokens.primary,
+        colorSchemeSeed: accent,
         scaffoldBackgroundColor: ColorTokens.darkBackground,
         textTheme: AppTypography.textTheme,
         appBarTheme: const AppBarTheme(
@@ -26,11 +26,11 @@ class DarkTheme {
             borderRadius: BorderRadius.circular(RadiusTokens.md),
           ),
         ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
           elevation: 2,
-          backgroundColor: ColorTokens.primary,
+          backgroundColor: accent,
           foregroundColor: Colors.white,
-          shape: CircleBorder(),
+          shape: const CircleBorder(),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
@@ -45,30 +45,30 @@ class DarkTheme {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(RadiusTokens.sm),
-            borderSide: const BorderSide(color: ColorTokens.primary, width: 1.5),
+            borderSide: BorderSide(color: accent, width: 1.5),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: Spacing.md,
             vertical: Spacing.sm + 2,
           ),
         ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
           elevation: 0,
           backgroundColor: ColorTokens.darkSurface,
-          selectedItemColor: ColorTokens.primary,
-          unselectedItemColor: Color(0xFF6B7280),
+          selectedItemColor: accent,
+          unselectedItemColor: const Color(0xFF6B7280),
           type: BottomNavigationBarType.fixed,
         ),
         navigationBarTheme: NavigationBarThemeData(
           elevation: 0,
           backgroundColor: ColorTokens.darkSurface,
-          indicatorColor: ColorTokens.primary.withOpacity(0.15),
+          indicatorColor: accent.withOpacity(0.15),
           labelTextStyle: MaterialStateProperty.resolveWith((states) {
             if (states.contains(MaterialState.selected)) {
-              return const TextStyle(
+              return TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
-                color: ColorTokens.primary,
+                color: accent,
               );
             }
             return const TextStyle(
@@ -82,7 +82,7 @@ class DarkTheme {
           shape: const CircleBorder(),
           fillColor: MaterialStateProperty.resolveWith((states) {
             if (states.contains(MaterialState.selected)) {
-              return ColorTokens.primary;
+              return accent;
             }
             return Colors.transparent;
           }),
@@ -95,7 +95,8 @@ class DarkTheme {
         ),
         chipTheme: ChipThemeData(
           elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.sm, vertical: Spacing.xxs),
+          padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.sm, vertical: Spacing.xxs),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(RadiusTokens.sm),
           ),

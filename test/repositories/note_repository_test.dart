@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:todoaw/data/models/note.dart';
 import 'package:todoaw/data/repositories/note_repository.dart';
 
 import '../test_helpers.dart';

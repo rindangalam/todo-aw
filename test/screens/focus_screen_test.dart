@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:todoaw/core/l10n/strings.dart';
-import 'package:todoaw/core/theme.dart';
+import 'package:todoaw/core/design/light_theme.dart';
 import 'package:todoaw/data/repositories/focus_repository.dart';
 import 'package:todoaw/data/repositories/task_repository.dart';
 import 'package:todoaw/providers/focus_provider.dart';
@@ -19,7 +19,7 @@ Widget createTestApp({
   required TaskRepository taskRepo,
 }) {
   return MaterialApp(
-    theme: AppTheme.light,
+    theme: LightTheme.theme,
     home: ProviderScope(
       overrides: [
         focusRepositoryProvider.overrideWithValue(focusRepo),
@@ -42,8 +42,7 @@ void main() {
   group('FocusScreen', () {
     testWidgets('shows timer display', (tester) async {
       when(() => focusRepo.getAll()).thenAnswer((_) async => []);
-      when(() => focusRepo.getTodayTotalMinutes())
-          .thenAnswer((_) async => 0);
+      when(() => focusRepo.getTodayTotalMinutes()).thenAnswer((_) async => 0);
       when(() => taskRepo.getActive()).thenAnswer((_) async => []);
 
       await tester.pumpWidget(createTestApp(
@@ -58,8 +57,7 @@ void main() {
 
     testWidgets('shows duration chips', (tester) async {
       when(() => focusRepo.getAll()).thenAnswer((_) async => []);
-      when(() => focusRepo.getTodayTotalMinutes())
-          .thenAnswer((_) async => 0);
+      when(() => focusRepo.getTodayTotalMinutes()).thenAnswer((_) async => 0);
       when(() => taskRepo.getActive()).thenAnswer((_) async => []);
 
       await tester.pumpWidget(createTestApp(
@@ -76,8 +74,7 @@ void main() {
 
     testWidgets('shows today minutes', (tester) async {
       when(() => focusRepo.getAll()).thenAnswer((_) async => []);
-      when(() => focusRepo.getTodayTotalMinutes())
-          .thenAnswer((_) async => 30);
+      when(() => focusRepo.getTodayTotalMinutes()).thenAnswer((_) async => 30);
       when(() => taskRepo.getActive()).thenAnswer((_) async => []);
 
       await tester.pumpWidget(createTestApp(

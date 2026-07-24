@@ -5,6 +5,7 @@ import '../../core/l10n/strings.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/search_provider.dart';
 import '../../providers/task_list_provider.dart';
+import '../widgets/error_state.dart';
 import '../widgets/task_card.dart';
 import 'task_form_screen.dart';
 
@@ -39,7 +40,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         title: TextField(
           controller: _searchController,
           autofocus: true,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             hintText: S.searchHint,
             border: InputBorder.none,
           ),
@@ -58,7 +59,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       ),
       body: searchResults.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => ErrorState(detail: e.toString()),
         data: (tasks) {
           if (_searchController.text.isEmpty) {
             return Center(
@@ -106,7 +107,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       categoryColor: task.categoryId != null
                           ? Color(categoryColors[task.categoryId] ?? 0xFF9CA3AF)
                           : null,
-                      onTap: () => showTaskFormSheet(context, taskId: task.uuid),
+                      onTap: () =>
+                          showTaskFormSheet(context, taskId: task.uuid),
                       onToggle: (_) => ref
                           .read(taskListProvider.notifier)
                           .toggleComplete(task),

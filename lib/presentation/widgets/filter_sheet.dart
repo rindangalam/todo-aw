@@ -6,6 +6,7 @@ import '../../core/l10n/strings.dart';
 import '../../data/models/task.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/filter_provider.dart';
+import '../../providers/tag_provider.dart';
 
 class FilterSheet extends ConsumerWidget {
   const FilterSheet({super.key});
@@ -29,7 +30,7 @@ class FilterSheet extends ConsumerWidget {
                 onPressed: () {
                   ref.read(filterProvider.notifier).reset();
                 },
-                child: Text(S.filterReset),
+                child: const Text(S.filterReset),
               ),
             ],
           ),
@@ -64,13 +65,9 @@ class FilterSheet extends ConsumerWidget {
             spacing: 8,
             children: Priority.values.map((p) {
               final selected = filter.priority == p;
-              return _buildChip(
-                context,
-                label: p.name.toUpperCase(),
-                selected: selected,
-                onSelected: (_) =>
-                    ref.read(filterProvider.notifier).setPriority(p),
-              );
+              return _priorityChip(context, p, selected: selected, onSelected: (_) {
+                ref.read(filterProvider.notifier).setPriority(p);
+              });
             }).toList(),
           ),
           const SizedBox(height: 16),
@@ -105,17 +102,96 @@ class FilterSheet extends ConsumerWidget {
               );
             },
           ),
+          const SizedBox(height: 16),
+          Text('Label',
+              style: theme.textTheme.titleMedium?.copyWith(fontSize: 14)),
+          const SizedBox(height: 8),
+          ref.watch(tagListProvider).when(
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+                data: (tags) {
+                  if (tags.isEmpty) return const SizedBox.shrink();
+                  return Wrap(
+                    spacing: 8,
+                    children: tags.map((t) {
+                      final selected = filter.tagIds.contains(t.uuid);
+                      return FilterChip(
+                        avatar: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: Color(t.color),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        label:
+                            Text(t.name, style: const TextStyle(fontSize: 12)),
+                        selected: selected,
+                        showCheckmark: false,
+                        onSelected: (_) =>
+                            ref.read(filterProvider.notifier).toggleTag(t.uuid),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(S.filterTerapkan),
+              child: const Text(S.filterTerapkan),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _priorityChip(
+    BuildContext context,
+    Priority p, {
+    required bool selected,
+    required ValueChanged<bool> onSelected,
+  }) {
+    final color = _priorityColor(p);
+    return FilterChip(
+      avatar: Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
+      ),
+      label: Text(
+        p.name.toUpperCase(),
+        style: TextStyle(
+          fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+          color: selected ? color : null,
+        ),
+      ),
+      selected: selected,
+      showCheckmark: false,
+      selectedColor: color.withOpacity(0.12),
+      side: selected
+          ? BorderSide(color: color, width: 1)
+          : BorderSide(color: color.withOpacity(0.3), width: 1),
+      onSelected: onSelected,
+    );
+  }
+
+  Color _priorityColor(Priority priority) {
+    switch (priority) {
+      case Priority.p1:
+        return const Color(0xFFEF4444);
+      case Priority.p2:
+        return const Color(0xFFF59E0B);
+      case Priority.p3:
+        return const Color(0xFF3B82F6);
+      case Priority.p4:
+        return const Color(0xFF9CA3AF);
+    }
   }
 
   Widget _buildChip(
@@ -126,9 +202,7 @@ class FilterSheet extends ConsumerWidget {
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return FilterChip(
-      avatar: selected
-          ? const Icon(Icons.check, size: 16)
-          : null,
+      avatar: selected ? const Icon(Icons.check, size: 16) : null,
       label: Text(
         label,
         style: TextStyle(
@@ -156,7 +230,8 @@ Future<void> showFilterSheet(BuildContext context) {
     context: context,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(RadiusTokens.lg)),
+      borderRadius:
+          BorderRadius.vertical(top: Radius.circular(RadiusTokens.lg)),
     ),
     builder: (_) => const FilterSheet(),
   );

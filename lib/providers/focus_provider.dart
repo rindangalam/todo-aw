@@ -11,8 +11,7 @@ final focusRepositoryProvider = Provider<FocusRepository>((ref) {
   return FocusRepository();
 });
 
-final focusSessionsProvider =
-    FutureProvider<List<FocusSession>>((ref) async {
+final focusSessionsProvider = FutureProvider<List<FocusSession>>((ref) async {
   return ref.read(focusRepositoryProvider).getAll();
 });
 
@@ -66,8 +65,7 @@ class FocusSessionNotifier extends StateNotifier<FocusState> {
   final Ref _ref;
   Timer? _timer;
 
-  FocusSessionNotifier(this._repository, this._ref)
-      : super(const FocusState());
+  FocusSessionNotifier(this._repository, this._ref) : super(const FocusState());
 
   @override
   void dispose() {

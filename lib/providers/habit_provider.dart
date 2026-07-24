@@ -12,14 +12,6 @@ final habitListProvider =
   return HabitListNotifier(ref.read(habitRepositoryProvider));
 });
 
-final habitLogsProvider =
-    FutureProvider.family<List<dynamic>, String>((ref, habitId) async {
-  final repo = ref.read(habitRepositoryProvider);
-  final logs = await repo.getLogs(habitId);
-  final today = await repo.getTodayLog(habitId);
-  return [logs, today];
-});
-
 final todayLoggedHabitIdsProvider = FutureProvider<Set<String>>((ref) async {
   final repo = ref.read(habitRepositoryProvider);
   final logs = await repo.getTodayLogs();

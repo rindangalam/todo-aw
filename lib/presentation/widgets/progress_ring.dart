@@ -22,6 +22,28 @@ class ProgressRing extends StatelessWidget {
     this.child,
   });
 
+  Color _gradientColor(double p) {
+    if (p < 0.33) {
+      return Color.lerp(
+        ColorTokens.danger,
+        ColorTokens.warning,
+        p / 0.33,
+      )!;
+    } else if (p < 0.66) {
+      return Color.lerp(
+        ColorTokens.warning,
+        ColorTokens.primary,
+        (p - 0.33) / 0.33,
+      )!;
+    } else {
+      return Color.lerp(
+        ColorTokens.primary,
+        ColorTokens.success,
+        (p - 0.66) / 0.34,
+      )!;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -30,14 +52,24 @@ class ProgressRing extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          CustomPaint(
-            size: Size(size, size),
-            painter: _RingPainter(
-              progress: progress.clamp(0.0, 1.0),
-              strokeWidth: strokeWidth,
-              color: color,
-              backgroundColor: backgroundColor,
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(
+              begin: 0,
+              end: progress.clamp(0.0, 1.0),
             ),
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, _) {
+              return CustomPaint(
+                size: Size(size, size),
+                painter: _RingPainter(
+                  progress: value,
+                  strokeWidth: strokeWidth,
+                  color: _gradientColor(value),
+                  backgroundColor: backgroundColor,
+                ),
+              );
+            },
           ),
           if (child != null) child!,
         ],

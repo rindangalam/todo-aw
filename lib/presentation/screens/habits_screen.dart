@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/l10n/strings.dart';
 import '../../data/models/habit.dart';
 import '../../providers/habit_provider.dart';
+import '../widgets/error_state.dart';
 import '../widgets/habit_card.dart';
 import '../widgets/habit_form_sheet.dart';
 
@@ -28,7 +29,10 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
       ),
       body: habitsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('${S.error}: $e')),
+        error: (e, _) => ErrorState(
+          detail: e.toString(),
+          onRetry: () => ref.read(habitListProvider.notifier).load(),
+        ),
         data: (habits) {
           if (habits.isEmpty) {
             return Center(
@@ -63,10 +67,8 @@ class _HabitsScreenState extends ConsumerState<HabitsScreen> {
           }
 
           final loggedTodayIds = todayLoggedIdsAsync.valueOrNull ?? <String>{};
-          final activeHabits =
-              habits.where((h) => !h.isArchived).toList();
-          final archivedHabits =
-              habits.where((h) => h.isArchived).toList();
+          final activeHabits = habits.where((h) => !h.isArchived).toList();
+          final archivedHabits = habits.where((h) => h.isArchived).toList();
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),

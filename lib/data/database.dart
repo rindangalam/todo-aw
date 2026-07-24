@@ -6,7 +6,9 @@ import 'models/focus_session.dart';
 import 'models/habit.dart';
 import 'models/habit_log.dart';
 import 'models/note.dart';
+import 'models/tag.dart';
 import 'models/task.dart';
+import 'models/task_tag.dart';
 
 class AppDatabase {
   static late sqlite.Database instance;
@@ -16,7 +18,7 @@ class AppDatabase {
         dbName ?? p.join(await sqlite.getDatabasesPath(), 'todoaw.db');
     instance = await sqlite.openDatabase(
       fullPath,
-      version: 2,
+      version: 4,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE tasks (
@@ -34,6 +36,7 @@ class AppDatabase {
             deletedAt TEXT,
             reminderMinutes INTEGER,
             estimatedMinutes INTEGER,
+            isTemplate INTEGER NOT NULL DEFAULT 0,
             createdAt TEXT NOT NULL,
             updatedAt TEXT NOT NULL
           )
@@ -113,11 +116,35 @@ class AppDatabase {
         await db.execute('''
           CREATE INDEX idx_focus_sessions_task ON focus_sessions(taskId)
         ''');
+        await db.execute('''
+          CREATE TABLE tags (
+            uuid TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            color INTEGER NOT NULL DEFAULT 4280100298
+          )
+        ''');
+        await db.execute('''
+          CREATE TABLE task_tags (
+            taskId TEXT NOT NULL,
+            tagId TEXT NOT NULL,
+            PRIMARY KEY (taskId, tagId),
+            FOREIGN KEY (taskId) REFERENCES tasks(uuid),
+            FOREIGN KEY (tagId) REFERENCES tags(uuid)
+          )
+        ''');
+        await db.execute('''
+          CREATE INDEX idx_task_tags_task ON task_tags(taskId)
+        ''');
+        await db.execute('''
+          CREATE INDEX idx_task_tags_tag ON task_tags(tagId)
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
-          await db.execute('ALTER TABLE tasks ADD COLUMN reminderMinutes INTEGER');
-          await db.execute('ALTER TABLE tasks ADD COLUMN estimatedMinutes INTEGER');
+          await db
+              .execute('ALTER TABLE tasks ADD COLUMN reminderMinutes INTEGER');
+          await db
+              .execute('ALTER TABLE tasks ADD COLUMN estimatedMinutes INTEGER');
           await db.execute('''
             CREATE TABLE habits (
               uuid TEXT PRIMARY KEY,
@@ -178,6 +205,34 @@ class AppDatabase {
           await db.execute('''
             CREATE INDEX idx_focus_sessions_task ON focus_sessions(taskId)
           ''');
+        }
+        if (oldVersion < 3) {
+          await db.execute('''
+            CREATE TABLE tags (
+              uuid TEXT PRIMARY KEY,
+              name TEXT NOT NULL UNIQUE,
+              color INTEGER NOT NULL DEFAULT 4280100298
+            )
+          ''');
+          await db.execute('''
+            CREATE TABLE task_tags (
+              taskId TEXT NOT NULL,
+              tagId TEXT NOT NULL,
+              PRIMARY KEY (taskId, tagId),
+              FOREIGN KEY (taskId) REFERENCES tasks(uuid),
+              FOREIGN KEY (tagId) REFERENCES tags(uuid)
+            )
+          ''');
+          await db.execute('''
+            CREATE INDEX idx_task_tags_task ON task_tags(taskId)
+          ''');
+          await db.execute('''
+            CREATE INDEX idx_task_tags_tag ON task_tags(tagId)
+          ''');
+        }
+        if (oldVersion < 4) {
+          await db.execute(
+              'ALTER TABLE tasks ADD COLUMN isTemplate INTEGER NOT NULL DEFAULT 0');
         }
       },
     );
@@ -354,6 +409,36 @@ class AppDatabase {
     return maps.map((m) => Note.fromMap(m)).toList();
   }
 
+  static Future<List<Note>> getArchivedNotes() async {
+    final maps = await instance.query(
+      'notes',
+      where: 'isArchived = ?',
+      whereArgs: [1],
+      orderBy: 'updatedAt DESC',
+    );
+    return maps.map((m) => Note.fromMap(m)).toList();
+  }
+
+  static Future<List<Task>> getArchivedTasks() async {
+    final maps = await instance.query(
+      'tasks',
+      where: 'isArchived = ? AND deletedAt IS NULL',
+      whereArgs: [1],
+      orderBy: 'updatedAt DESC',
+    );
+    return maps.map((m) => Task.fromMap(m)).toList();
+  }
+
+  static Future<List<Task>> getTemplates() async {
+    final maps = await instance.query(
+      'tasks',
+      where: 'isTemplate = ? AND isArchived = ? AND deletedAt IS NULL',
+      whereArgs: [1, 0],
+      orderBy: 'updatedAt DESC',
+    );
+    return maps.map((m) => Task.fromMap(m)).toList();
+  }
+
   static Future<Note?> getNote(String uuid) async {
     final maps = await instance.query(
       'notes',
@@ -393,11 +478,13 @@ class AppDatabase {
   }
 
   static Future<List<FocusSession>> getFocusSessions() async {
-    final maps = await instance.query('focus_sessions', orderBy: 'createdAt DESC');
+    final maps =
+        await instance.query('focus_sessions', orderBy: 'createdAt DESC');
     return maps.map((m) => FocusSession.fromMap(m)).toList();
   }
 
-  static Future<List<FocusSession>> getFocusSessionsByTask(String taskId) async {
+  static Future<List<FocusSession>> getFocusSessionsByTask(
+      String taskId) async {
     final maps = await instance.query(
       'focus_sessions',
       where: 'taskId = ?',
@@ -422,6 +509,68 @@ class AppDatabase {
   }
 
   static Future<void> deleteFocusSession(String uuid) async {
-    await instance.delete('focus_sessions', where: 'uuid = ?', whereArgs: [uuid]);
+    await instance
+        .delete('focus_sessions', where: 'uuid = ?', whereArgs: [uuid]);
+  }
+
+  static Future<List<Tag>> getAllTags() async {
+    final maps = await instance.query('tags', orderBy: 'name ASC');
+    return maps.map((m) => Tag.fromMap(m)).toList();
+  }
+
+  static Future<Tag?> getTag(String uuid) async {
+    final maps = await instance.query(
+      'tags',
+      where: 'uuid = ?',
+      whereArgs: [uuid],
+    );
+    if (maps.isEmpty) return null;
+    return Tag.fromMap(maps.first);
+  }
+
+  static Future<void> insertTag(Tag tag) async {
+    await instance.insert('tags', tag.toMap(),
+        conflictAlgorithm: sqlite.ConflictAlgorithm.replace);
+  }
+
+  static Future<void> updateTag(Tag tag) async {
+    await instance.update(
+      'tags',
+      tag.toMap(),
+      where: 'uuid = ?',
+      whereArgs: [tag.uuid],
+    );
+  }
+
+  static Future<void> deleteTag(String uuid) async {
+    await instance.delete('tags', where: 'uuid = ?', whereArgs: [uuid]);
+    await instance.delete('task_tags', where: 'tagId = ?', whereArgs: [uuid]);
+  }
+
+  static Future<List<TaskTag>> getTaskTags(String taskId) async {
+    final maps = await instance.query(
+      'task_tags',
+      where: 'taskId = ?',
+      whereArgs: [taskId],
+    );
+    return maps.map((m) => TaskTag.fromMap(m)).toList();
+  }
+
+  static Future<void> setTaskTags(String taskId, List<String> tagIds) async {
+    final batch = instance.batch();
+    batch.delete('task_tags', where: 'taskId = ?', whereArgs: [taskId]);
+    for (final tagId in tagIds) {
+      batch.insert('task_tags', TaskTag(taskId: taskId, tagId: tagId).toMap());
+    }
+    await batch.commit(noResult: true);
+  }
+
+  static Future<List<String>> getTaskIdsByTag(String tagId) async {
+    final maps = await instance.query(
+      'task_tags',
+      where: 'tagId = ?',
+      whereArgs: [tagId],
+    );
+    return maps.map((m) => m['taskId'] as String).toList();
   }
 }

@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:todoaw/core/l10n/strings.dart';
-import 'package:todoaw/core/theme.dart';
+import 'package:todoaw/core/design/light_theme.dart';
 import 'package:todoaw/data/models/task.dart';
 import 'package:todoaw/providers/task_list_provider.dart';
 import 'package:todoaw/providers/category_provider.dart';
@@ -20,7 +20,7 @@ Widget createTestApp({
   required CategoryRepository categoryRepo,
 }) {
   return MaterialApp(
-    theme: AppTheme.light,
+    theme: LightTheme.theme,
     home: ProviderScope(
       overrides: [
         taskRepositoryProvider.overrideWithValue(taskRepo),

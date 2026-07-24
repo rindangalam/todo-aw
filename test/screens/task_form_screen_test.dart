@@ -7,9 +7,10 @@ import 'package:todoaw/providers/category_provider.dart';
 import 'package:todoaw/providers/task_list_provider.dart';
 import 'package:todoaw/data/repositories/category_repository.dart';
 import 'package:todoaw/data/repositories/task_repository.dart';
-import 'package:todoaw/presentation/screens/task_form_screen.dart' show TaskFormSheet;
+import 'package:todoaw/presentation/screens/task_form_screen.dart'
+    show TaskFormSheet;
 import 'package:todoaw/core/l10n/strings.dart';
-import 'package:todoaw/core/theme.dart';
+import 'package:todoaw/core/design/light_theme.dart';
 
 class MockTaskRepository extends Mock implements TaskRepository {}
 
@@ -36,7 +37,7 @@ Widget createTestApp({
   }
 
   return MaterialApp(
-    theme: AppTheme.light,
+    theme: LightTheme.theme,
     home: ProviderScope(
       overrides: [
         taskRepositoryProvider.overrideWithValue(taskRepo),

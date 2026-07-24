@@ -11,6 +11,8 @@ class TaskRepository {
 
   Future<List<Task>> getActive() => AppDatabase.getActiveTasks();
 
+  Future<List<Task>> getArchived() => AppDatabase.getArchivedTasks();
+
   Future<List<Task>> getTrashed() async {
     final all = await AppDatabase.getAllTasks();
     final trashed = all.where((t) => t.deletedAt != null).toList();
@@ -50,6 +52,25 @@ class TaskRepository {
 
   Future<void> update(Task task) async {
     await AppDatabase.updateTask(task.copyWith(updatedAt: DateTime.now()));
+  }
+
+  Future<Task> createFromTask(Task task) async {
+    final now = DateTime.now();
+    final t = Task(
+      uuid: _uuid.v4(),
+      title: task.title,
+      description: task.description,
+      isCompleted: false,
+      priority: task.priority,
+      categoryId: task.categoryId,
+      dueDate: task.dueDate,
+      isRecurring: task.isRecurring,
+      recurringRule: task.recurringRule,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await AppDatabase.insertTask(t);
+    return t;
   }
 
   Future<void> delete(String uuid) async {
@@ -102,5 +123,23 @@ class TaskRepository {
         await AppDatabase.deleteTask(task.uuid);
       }
     }
+  }
+
+  Future<List<Task>> getTemplates() => AppDatabase.getTemplates();
+
+  Future<Task> createTemplateFromTask(Task task) async {
+    final now = DateTime.now();
+    final t = Task(
+      uuid: _uuid.v4(),
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+      categoryId: task.categoryId,
+      isTemplate: true,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await AppDatabase.insertTask(t);
+    return t;
   }
 }

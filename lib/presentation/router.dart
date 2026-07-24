@@ -9,96 +9,116 @@ import 'screens/settings_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/categories_screen.dart';
+import 'screens/tags_screen.dart';
 import 'screens/habits_screen.dart';
 import 'screens/notes_screen.dart';
 import 'screens/trash_screen.dart';
+import 'screens/archive_screen.dart';
+import 'widgets/intro_slides.dart';
 
 import '../core/l10n/strings.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
 
-final GoRouter appRouter = GoRouter(
-  navigatorKey: _rootNavigatorKey,
-  initialLocation: '/splash',
-  routes: [
-    GoRoute(
-      path: '/splash',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const SplashScreen(),
-    ),
-    ShellRoute(
-      builder: (context, state, child) {
-        final location = state.location;
-        final int currentIndex;
-        if (location == '/') {
-          currentIndex = 0;
-        } else if (location.startsWith('/calendar')) {
-          currentIndex = 1;
-        } else if (location.startsWith('/dashboard')) {
-          currentIndex = 2;
-        } else if (location.startsWith('/notes')) {
-          currentIndex = 3;
-        } else if (location.startsWith('/settings')) {
-          currentIndex = 4;
-        } else {
-          currentIndex = 0;
-        }
-        return ScaffoldWithNavBar(
-          currentIndex: currentIndex,
-          child: child,
-        );
-      },
-      routes: [
-        GoRoute(
-          path: '/',
-          builder: (context, state) => const HomeScreen(),
-        ),
-        GoRoute(
-          path: '/calendar',
-          builder: (context, state) => const CalendarScreen(),
-        ),
-        GoRoute(
-          path: '/dashboard',
-          builder: (context, state) => const DashboardScreen(),
-        ),
-        GoRoute(
-          path: '/notes',
-          builder: (context, state) => const NotesScreen(),
-        ),
-        GoRoute(
-          path: '/settings',
-          builder: (context, state) => const SettingsScreen(),
-        ),
-      ],
-    ),
-    GoRoute(
-      path: '/search',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const SearchScreen(),
-    ),
-    GoRoute(
-      path: '/trash',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const TrashScreen(),
-    ),
-    GoRoute(
-      path: '/categories',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const CategoriesScreen(),
-    ),
-    GoRoute(
-      path: '/habits',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const HabitsScreen(),
-    ),
-    GoRoute(
-      path: '/focus',
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const FocusScreen(),
-    ),
-  ],
-);
+GoRouter appRouter({String initialLocation = '/splash'}) {
+  return GoRouter(
+    navigatorKey: _rootNavigatorKey,
+    initialLocation: initialLocation,
+    routes: [
+      GoRoute(
+        path: '/splash',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const SplashScreen(),
+      ),
+      GoRoute(
+        path: '/intro',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const IntroSlides(),
+      ),
+      ShellRoute(
+        builder: (context, state, child) {
+          final location = state.location;
+          final int currentIndex;
+          if (location == '/') {
+            currentIndex = 0;
+          } else if (location.startsWith('/calendar')) {
+            currentIndex = 1;
+          } else if (location.startsWith('/dashboard')) {
+            currentIndex = 2;
+          } else if (location.startsWith('/notes')) {
+            currentIndex = 3;
+          } else if (location.startsWith('/settings')) {
+            currentIndex = 4;
+          } else {
+            currentIndex = 0;
+          }
+          return ScaffoldWithNavBar(
+            currentIndex: currentIndex,
+            child: child,
+          );
+        },
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => const HomeScreen(),
+          ),
+          GoRoute(
+            path: '/calendar',
+            builder: (context, state) => const CalendarScreen(),
+          ),
+          GoRoute(
+            path: '/dashboard',
+            builder: (context, state) => const DashboardScreen(),
+          ),
+          GoRoute(
+            path: '/notes',
+            builder: (context, state) => const NotesScreen(),
+          ),
+          GoRoute(
+            path: '/settings',
+            builder: (context, state) => const SettingsScreen(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/search',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const SearchScreen(),
+      ),
+      GoRoute(
+        path: '/trash',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const TrashScreen(),
+      ),
+      GoRoute(
+        path: '/archive',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const ArchiveScreen(),
+      ),
+      GoRoute(
+        path: '/categories',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const CategoriesScreen(),
+      ),
+      GoRoute(
+        path: '/tags',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const TagsScreen(),
+      ),
+      GoRoute(
+        path: '/habits',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const HabitsScreen(),
+      ),
+      GoRoute(
+        path: '/focus',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const FocusScreen(),
+      ),
+    ],
+  );
+}
 
 class ScaffoldWithNavBar extends StatelessWidget {
   final int currentIndex;

@@ -70,22 +70,28 @@ void _drawClipboard(img.Image image, int s) {
 
   for (var y = clipTop; y <= clipBottom; y++) {
     for (var x = clipLeft; x <= clipRight; x++) {
-      if (_inRoundedRect(x, y, clipLeft, clipTop, clipRight, clipBottom, clipRR)) {
+      if (_inRoundedRect(
+          x, y, clipLeft, clipTop, clipRight, clipBottom, clipRR)) {
         image.setPixel(x, y, _clipBlue);
       }
     }
   }
 
-  _brushDot(image, cx, (clipTop + clipBottom) ~/ 2, (s * 0.010).round().clamp(1, 20), _rivetBlue);
+  _brushDot(image, cx, (clipTop + clipBottom) ~/ 2,
+      (s * 0.010).round().clamp(1, 20), _rivetBlue);
 }
 
 bool _inRoundedRect(int x, int y, int l, int t, int r, int b, int rr) {
   if (x < l || x > r || y < t || y > b) return false;
   if (x >= l + rr && x <= r - rr && y >= t + rr && y <= b - rr) return true;
-  if (x < l + rr && y < t + rr) return _sq(x - (l + rr)) + _sq(y - (t + rr)) <= rr * rr;
-  if (x > r - rr && y < t + rr) return _sq(x - (r - rr)) + _sq(y - (t + rr)) <= rr * rr;
-  if (x < l + rr && y > b - rr) return _sq(x - (l + rr)) + _sq(y - (b - rr)) <= rr * rr;
-  if (x > r - rr && y > b - rr) return _sq(x - (r - rr)) + _sq(y - (b - rr)) <= rr * rr;
+  if (x < l + rr && y < t + rr)
+    return _sq(x - (l + rr)) + _sq(y - (t + rr)) <= rr * rr;
+  if (x > r - rr && y < t + rr)
+    return _sq(x - (r - rr)) + _sq(y - (t + rr)) <= rr * rr;
+  if (x < l + rr && y > b - rr)
+    return _sq(x - (l + rr)) + _sq(y - (b - rr)) <= rr * rr;
+  if (x > r - rr && y > b - rr)
+    return _sq(x - (r - rr)) + _sq(y - (b - rr)) <= rr * rr;
   return true;
 }
 
@@ -153,7 +159,8 @@ void _drawBoldCheckmark(img.Image image, int cx, int cy, int size, int color) {
 
 // ── Circular brush ──
 
-void _brushLine(img.Image image, int x1, int y1, int x2, int y2, int r, int color) {
+void _brushLine(
+    img.Image image, int x1, int y1, int x2, int y2, int r, int color) {
   final dx = x2 - x1, dy = y2 - y1;
   final len = math.sqrt((dx * dx + dy * dy).toDouble());
   final steps = len.ceil().clamp(1, 5000);

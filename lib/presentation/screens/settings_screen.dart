@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/l10n/strings.dart';
 import '../../providers/data_service_provider.dart';
 import '../../providers/theme_provider.dart';
+import '../../services/seed_data.dart';
+import '../../services/tour_service.dart';
+import '../widgets/color_picker_sheet.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -12,30 +15,67 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
-    final isDark = themeMode == ThemeMode.dark;
+    final accent = ref.watch(accentColorProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(S.settingsTitle)),
+      appBar: AppBar(title: const Text(S.settingsTitle)),
       body: ListView(
         children: [
-          _SectionHeader(title: S.settingsTampilan),
-          SwitchListTile(
-            secondary: const Icon(Icons.dark_mode),
-            title: Text(S.settingsModeGelap),
-            value: isDark,
-            onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
+          const _SectionHeader(title: S.settingsTampilan),
+          ListTile(
+            leading: Icon(Icons.settings_suggest,
+                color: themeMode == ThemeMode.system ? accent : null),
+            title: const Text(S.settingsModeSystem),
+            trailing: themeMode == ThemeMode.system
+                ? Icon(Icons.check, color: accent)
+                : null,
+            onTap: () =>
+                ref.read(themeModeProvider.notifier).setMode(ThemeMode.system),
           ),
+          ListTile(
+            leading: Icon(Icons.light_mode,
+                color: themeMode == ThemeMode.light ? accent : null),
+            title: const Text(S.settingsModeLight),
+            trailing: themeMode == ThemeMode.light
+                ? Icon(Icons.check, color: accent)
+                : null,
+            onTap: () =>
+                ref.read(themeModeProvider.notifier).setMode(ThemeMode.light),
+          ),
+          ListTile(
+            leading: Icon(Icons.dark_mode,
+                color: themeMode == ThemeMode.dark ? accent : null),
+            title: const Text(S.settingsModeDark),
+            trailing: themeMode == ThemeMode.dark
+                ? Icon(Icons.check, color: accent)
+                : null,
+            onTap: () =>
+                ref.read(themeModeProvider.notifier).setMode(ThemeMode.dark),
+          ),
+          _AccentColorTile(),
           const Divider(height: 1),
-          _SectionHeader(title: S.settingsData),
+          const _SectionHeader(title: S.settingsData),
           ListTile(
             leading: const Icon(Icons.category),
-            title: Text(S.settingsKategori),
+            title: const Text(S.settingsKategori),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/categories'),
           ),
           ListTile(
+            leading: const Icon(Icons.label_outline),
+            title: const Text('Label'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/tags'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.archive_outlined),
+            title: const Text('Arsip'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/archive'),
+          ),
+          ListTile(
             leading: const Icon(Icons.delete_outline),
-            title: Text(S.settingsTempatSampah),
+            title: const Text(S.settingsTempatSampah),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/trash'),
           ),
@@ -44,6 +84,11 @@ class SettingsScreen extends ConsumerWidget {
             title: S.settingsBackup,
             subtitle: 'Todoaw Backup (.json)',
             onExport: () => ref.read(dataServiceProvider).exportJson(),
+          ),
+          _ExportTile(
+            icon: Icons.restore,
+            title: S.settingsRestore,
+            onExport: () => _restoreData(context, ref),
           ),
           _ExportTile(
             icon: Icons.file_download,
@@ -61,15 +106,84 @@ class SettingsScreen extends ConsumerWidget {
             onExport: () => ref.read(dataServiceProvider).exportSqlite(),
           ),
           const Divider(height: 1),
-          _SectionHeader(title: S.settingsTentang),
           ListTile(
-            leading: const Icon(Icons.info_outline),
+            leading: const Icon(Icons.dataset_outlined),
+            title: const Text(S.settingsMuatContohData),
+            onTap: () async {
+              await seedIfEmpty();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text(S.settingsDataContohBerhasil)),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.tour_outlined),
+            title: const Text('Ulangi Tour'),
+            onTap: () async {
+              await TourService.resetAll();
+              context.go('/intro');
+            },
+          ),
+          const Divider(height: 1),
+          const _SectionHeader(title: S.settingsTentang),
+          const ListTile(
+            leading: Icon(Icons.info_outline),
             title: Text(S.settingsVersi),
-            trailing: const Text('1.0.0'),
+            trailing: Text('1.0.0'),
           ),
         ],
       ),
     );
+  }
+
+  Future<String> _restoreData(BuildContext context, WidgetRef ref) async {
+    try {
+      final filePath = await _pickJsonFile(context);
+      if (filePath == null) return 'Dibatalkan';
+      await ref.read(dataServiceProvider).importJson(filePath);
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data berhasil dipulihkan')),
+      );
+      return 'Berhasil';
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memulihkan: $e')),
+      );
+      return 'Gagal: $e';
+    }
+  }
+
+  Future<String?> _pickJsonFile(BuildContext context) async {
+    // Simple file dialog using TextField for file path input
+    final controller = TextEditingController();
+    final path = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Pilih file backup'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            hintText: '/storage/emulated/0/Download/Todoaw/todoaw_backup.json',
+            labelText: 'Path file .json',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: const Text('Pulihkan'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (path == null || path.isEmpty) return null;
+    return path;
   }
 }
 
@@ -95,6 +209,7 @@ class _ExportTile extends StatelessWidget {
       onTap: () async {
         try {
           final path = await onExport();
+          // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Tersimpan di: $path'),
@@ -102,6 +217,7 @@ class _ExportTile extends StatelessWidget {
             ),
           );
         } catch (e) {
+          // ignore: use_build_context_synchronously
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Gagal: $e')),
           );
@@ -127,6 +243,41 @@ class _SectionHeader extends StatelessWidget {
               color: Theme.of(context).colorScheme.primary,
             ),
       ),
+    );
+  }
+}
+
+class _AccentColorTile extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final accent = ref.watch(accentColorProvider);
+    return ListTile(
+      leading: Icon(Icons.palette_outlined, color: accent),
+      title: const Text('Warna Aksen'),
+      subtitle: Text(
+        '#${accent.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
+        style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+      ),
+      trailing: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: accent,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.15),
+          ),
+        ),
+      ),
+      onTap: () async {
+        final result = await showColorPickerSheet(
+          context,
+          initialColor: accent,
+        );
+        if (result != null) {
+          ref.read(accentColorProvider.notifier).setColor(result);
+        }
+      },
     );
   }
 }

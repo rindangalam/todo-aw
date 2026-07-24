@@ -5,6 +5,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart' as sqlite;
 
 import '../../data/database.dart';
+import '../../data/models/category.dart';
+import '../../data/models/focus_session.dart';
+import '../../data/models/habit.dart';
+import '../../data/models/note.dart';
+import '../../data/models/task.dart';
 import 'package:path/path.dart' as p;
 
 class DataService {
@@ -78,13 +83,11 @@ class DataService {
           (await AppDatabase.getAllCategories()).map((c) => c.toMap()).toList(),
       'habits':
           (await AppDatabase.getAllHabits()).map((h) => h.toMap()).toList(),
-      'habit_logs': await AppDatabase.instance
-          .query('habit_logs', orderBy: 'date DESC'),
-      'notes':
-          (await AppDatabase.getAllNotes()).map((n) => n.toMap()).toList(),
-      'focus_sessions': (await AppDatabase.getFocusSessions())
-          .map((s) => s.toMap())
-          .toList(),
+      'habit_logs':
+          await AppDatabase.instance.query('habit_logs', orderBy: 'date DESC'),
+      'notes': (await AppDatabase.getAllNotes()).map((n) => n.toMap()).toList(),
+      'focus_sessions':
+          (await AppDatabase.getFocusSessions()).map((s) => s.toMap()).toList(),
       'exportedAt': DateTime.now().toIso8601String(),
       'version': 1,
     };
@@ -97,5 +100,56 @@ class DataService {
       return '"${s.replaceAll('"', '""')}"';
     }
     return s;
+  }
+
+  Future<void> importJson(String filePath) async {
+    final file = File(filePath);
+    final content = await file.readAsString();
+    final data = jsonDecode(content) as Map<String, dynamic>;
+
+    await AppDatabase.instance.transaction((txn) async {
+      if (data['tasks'] is List) {
+        for (final m in data['tasks'] as List) {
+          final task = Task.fromMap(m as Map<String, dynamic>);
+          // Use existing UUID to allow re-import of same data
+          await txn.insert('tasks', task.toMap(),
+              conflictAlgorithm: sqlite.ConflictAlgorithm.replace);
+        }
+      }
+      if (data['categories'] is List) {
+        for (final m in data['categories'] as List) {
+          final cat = Category.fromMap(m as Map<String, dynamic>);
+          await txn.insert('categories', cat.toMap(),
+              conflictAlgorithm: sqlite.ConflictAlgorithm.replace);
+        }
+      }
+      if (data['habits'] is List) {
+        for (final m in data['habits'] as List) {
+          final habit = Habit.fromMap(m as Map<String, dynamic>);
+          await txn.insert('habits', habit.toMap(),
+              conflictAlgorithm: sqlite.ConflictAlgorithm.replace);
+        }
+      }
+      if (data['habit_logs'] is List) {
+        for (final m in data['habit_logs'] as List) {
+          await txn.insert('habit_logs', m as Map<String, dynamic>,
+              conflictAlgorithm: sqlite.ConflictAlgorithm.replace);
+        }
+      }
+      if (data['notes'] is List) {
+        for (final m in data['notes'] as List) {
+          final note = Note.fromMap(m as Map<String, dynamic>);
+          await txn.insert('notes', note.toMap(),
+              conflictAlgorithm: sqlite.ConflictAlgorithm.replace);
+        }
+      }
+      if (data['focus_sessions'] is List) {
+        for (final m in data['focus_sessions'] as List) {
+          final session = FocusSession.fromMap(m as Map<String, dynamic>);
+          await txn.insert('focus_sessions', session.toMap(),
+              conflictAlgorithm: sqlite.ConflictAlgorithm.replace);
+        }
+      }
+    });
   }
 }

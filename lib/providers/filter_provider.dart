@@ -45,4 +45,14 @@ class FilterNotifier extends StateNotifier<FilterState> {
   void reset() {
     state = const FilterState();
   }
+
+  void toggleTag(String tagId) {
+    final ids = Set<String>.from(state.tagIds);
+    if (ids.contains(tagId)) {
+      ids.remove(tagId);
+    } else {
+      ids.add(tagId);
+    }
+    state = state.copyWith(tagIds: ids);
+  }
 }

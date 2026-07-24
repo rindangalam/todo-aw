@@ -139,8 +139,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildWeeklyChart(
-      ThemeData theme, AsyncValue<AppStats> statsAsync) {
+  Widget _buildWeeklyChart(ThemeData theme, AsyncValue<AppStats> statsAsync) {
     final stats = statsAsync.valueOrNull;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -176,8 +175,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatsRow(
-      ThemeData theme, AsyncValue<AppStats> statsAsync) {
+  Widget _buildStatsRow(ThemeData theme, AsyncValue<AppStats> statsAsync) {
     final stats = statsAsync.valueOrNull;
     final total = stats?.totalTasks ?? 0;
     final completed = stats?.completedTasks ?? 0;

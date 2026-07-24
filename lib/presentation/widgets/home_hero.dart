@@ -1,37 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/design/tokens.dart';
 import '../../core/l10n/strings.dart';
+import '../../providers/task_list_provider.dart';
 import '../screens/task_form_screen.dart';
 import 'progress_ring.dart';
-
-String _greeting() {
-  final hour = DateTime.now().hour;
-  if (hour < 11) {
-    return S.greetingPagi;
-  } else if (hour < 15) {
-    return S.greetingSiang;
-  } else if (hour < 18) {
-    return S.greetingSore;
-  }
-  return S.greetingMalam;
-}
 
 class HomeHero extends StatelessWidget {
   final int todayTotal;
   final int todayCompleted;
   final int streak;
+  final GlobalKey? quickActionsKey;
 
   const HomeHero({
     super.key,
     required this.todayTotal,
     required this.todayCompleted,
     required this.streak,
+    this.quickActionsKey,
   });
 
-  double get _progress =>
-      todayTotal > 0 ? todayCompleted / todayTotal : 0.0;
+  double get _progress => todayTotal > 0 ? todayCompleted / todayTotal : 0.0;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +62,7 @@ class HomeHero extends StatelessWidget {
               todayTotal: todayTotal,
             ),
             const SizedBox(height: Spacing.lg),
-            _QuickActions(),
+            _QuickActions(key: quickActionsKey),
           ],
         ),
       ),
@@ -79,10 +70,125 @@ class HomeHero extends StatelessWidget {
   }
 }
 
-class _GreetingRow extends StatelessWidget {
+class _TemplatePickerSheet extends ConsumerWidget {
+  const _TemplatePickerSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final templatesAsync = ref.watch(templateListProvider);
+    return DraggableScrollableSheet(
+      initialChildSize: 0.5,
+      maxChildSize: 0.85,
+      minChildSize: 0.3,
+      expand: false,
+      builder: (_, scrollController) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 32,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(S.templatePilih,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            Expanded(
+              child: templatesAsync.when(
+                data: (templates) {
+                  if (templates.isEmpty) {
+                    return const Center(child: Text(S.templateBelumAda));
+                  }
+                  return ListView.separated(
+                    controller: scrollController,
+                    itemCount: templates.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (_, i) {
+                      final t = templates[i];
+                      return ListTile(
+                        title: Text(t.title),
+                        subtitle:
+                            t.description != null && t.description!.isNotEmpty
+                                ? Text(t.description!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis)
+                                : null,
+                        leading: const Icon(Icons.bookmark,
+                            color: Color(0xFF8B5CF6)),
+                        onTap: () async {
+                          Navigator.pop(context);
+                          await ref
+                              .read(taskListProvider.notifier)
+                              .createFromTemplate(t.uuid);
+                        },
+                      );
+                    },
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('Gagal memuat: $e')),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GreetingRow extends StatefulWidget {
   final int streak;
 
   const _GreetingRow({required this.streak});
+
+  @override
+  State<_GreetingRow> createState() => _GreetingRowState();
+}
+
+class _GreetingRowState extends State<_GreetingRow>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+    _pulseAnim = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  String _greetingWithWave() {
+    final hour = DateTime.now().hour;
+    if (hour < 11) {
+      return '${S.greetingPagi} \u{1F44B}';
+    } else if (hour < 15) {
+      return '${S.greetingSiang} \u{1F44B}';
+    } else if (hour < 18) {
+      return '${S.greetingSore} \u{1F44B}';
+    }
+    return '${S.greetingMalam} \u{1F44B}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,10 +199,16 @@ class _GreetingRow extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              _greeting(),
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              transitionBuilder: (child, anim) =>
+                  FadeTransition(opacity: anim, child: child),
+              child: Text(
+                _greetingWithWave(),
+                key: ValueKey(DateTime.now().hour),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
             const SizedBox(height: 2),
@@ -108,29 +220,38 @@ class _GreetingRow extends StatelessWidget {
             ),
           ],
         ),
-        if (streak > 0)
-          Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: Spacing.sm, vertical: Spacing.xxs),
-            decoration: BoxDecoration(
-              color: ColorTokens.warning.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.local_fire_department,
-                    size: 16, color: ColorTokens.warning),
-                const SizedBox(width: 4),
-                Text(
-                  '$streak ${S.homeStreak}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: ColorTokens.warning,
+        if (widget.streak > 0)
+          AnimatedBuilder(
+            animation: _pulseAnim,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: _pulseAnim.value,
+                child: child,
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.sm, vertical: Spacing.xxs),
+              decoration: BoxDecoration(
+                color: ColorTokens.warning.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.local_fire_department,
+                      size: 16, color: ColorTokens.warning),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${widget.streak} ${S.homeStreak}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: ColorTokens.warning,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
       ],
@@ -158,9 +279,7 @@ class _ProgressSection extends StatelessWidget {
           progress: progress,
           size: 72,
           strokeWidth: 5,
-          color: progress >= 1.0
-              ? ColorTokens.success
-              : ColorTokens.primary,
+          color: progress >= 1.0 ? ColorTokens.success : ColorTokens.primary,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -252,36 +371,65 @@ class _StatBadge extends StatelessWidget {
 }
 
 class _QuickActions extends StatelessWidget {
+  const _QuickActions({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _ActionButton(
-          icon: Icons.checklist,
-          label: S.quickTambahTugas,
-          color: ColorTokens.primary,
-          onTap: () => showTaskFormSheet(context),
+        Expanded(
+          child: _ActionButton(
+            icon: Icons.checklist,
+            label: S.quickTambahTugas,
+            color: ColorTokens.primary,
+            onTap: () => showTaskFormSheet(context),
+          ),
         ),
-        _ActionButton(
-          icon: Icons.lightbulb_outline,
-          label: S.quickTambahCatatan,
-          color: ColorTokens.secondary,
-          onTap: () => context.push('/notes'),
+        Expanded(
+          child: _ActionButton(
+            icon: Icons.bookmark,
+            label: S.quickDariTemplate,
+            color: const Color(0xFF8B5CF6),
+            onTap: () => _showTemplatePicker(context),
+          ),
         ),
-        _ActionButton(
-          icon: Icons.timer_outlined,
-          label: S.quickMulaiFokus,
-          color: ColorTokens.success,
-          onTap: () => context.push('/focus'),
+        Expanded(
+          child: _ActionButton(
+            icon: Icons.lightbulb_outline,
+            label: S.quickTambahCatatan,
+            color: ColorTokens.secondary,
+            onTap: () => context.push('/notes'),
+          ),
         ),
-        _ActionButton(
-          icon: Icons.repeat,
-          label: S.quickTambahKebiasaan,
-          color: ColorTokens.warning,
-          onTap: () => context.push('/habits'),
+        Expanded(
+          child: _ActionButton(
+            icon: Icons.timer_outlined,
+            label: S.quickMulaiFokus,
+            color: ColorTokens.success,
+            onTap: () => context.push('/focus'),
+          ),
+        ),
+        Expanded(
+          child: _ActionButton(
+            icon: Icons.repeat,
+            label: S.quickTambahKebiasaan,
+            color: ColorTokens.warning,
+            onTap: () => context.push('/habits'),
+          ),
         ),
       ],
+    );
+  }
+
+  void _showTemplatePicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(RadiusTokens.lg)),
+      ),
+      builder: (_) => const _TemplatePickerSheet(),
     );
   }
 }
@@ -320,8 +468,11 @@ class _ActionButton extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.w500,
               color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),

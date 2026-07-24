@@ -32,6 +32,12 @@ dependencies:
   path_provider: ^2.0.0
   path: ^1.8.0
   shared_preferences: ^2.0.0
+
+  # Onboarding / Tutorial
+
+  # Home screen widget
+  home_widget: ^0.2.0
+  tutorial_coach_mark: 1.2.2
   # (export via file save — share_plus removed due to AGP incompatibility)
 
 dev_dependencies:

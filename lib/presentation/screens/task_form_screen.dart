@@ -7,6 +7,7 @@ import '../../core/l10n/strings.dart';
 import '../../data/models/recurrence.dart';
 import '../../data/models/task.dart';
 import '../../providers/category_provider.dart';
+import '../../providers/tag_provider.dart';
 import '../../providers/task_list_provider.dart';
 import '../widgets/priority_selector.dart';
 import '../widgets/recurring_picker.dart';
@@ -16,7 +17,8 @@ Future<T?> showTaskFormSheet<T>(BuildContext context, {String? taskId}) {
     context: context,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(RadiusTokens.lg)),
+      borderRadius:
+          BorderRadius.vertical(top: Radius.circular(RadiusTokens.lg)),
     ),
     builder: (_) => TaskFormSheet(taskId: taskId),
   );
@@ -40,9 +42,12 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
   String? _categoryId;
   DateTime? _dueDate;
   RecurrenceRule? _recurrence;
+  int _reminderMinutes = 30;
+  final _estimatedController = TextEditingController();
   bool _isLoading = false;
   List<Task> _subtasks = [];
   String? _parentTaskId;
+  List<String> _selectedTagIds = [];
 
   bool get _isEditing => widget.taskId != null;
 
@@ -60,6 +65,7 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
     _titleController.dispose();
     _descriptionController.dispose();
     _subtaskController.dispose();
+    _estimatedController.dispose();
     super.dispose();
   }
 
@@ -75,7 +81,12 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
         _dueDate = task.dueDate;
         _recurrence = RecurrenceRule.fromRrule(task.recurringRule);
         _parentTaskId = task.parentId;
+        _reminderMinutes = task.reminderMinutes ?? 30;
+        _estimatedController.text = task.estimatedMinutes?.toString() ?? '';
       });
+      final tagIds =
+          await ref.read(tagRepositoryProvider).getTaskTags(widget.taskId!);
+      if (mounted) setState(() => _selectedTagIds = tagIds);
     }
   }
 
@@ -92,6 +103,7 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
     setState(() => _isLoading = true);
 
     try {
+      final tagRepo = ref.read(tagRepositoryProvider);
       final notifier = ref.read(taskListProvider.notifier);
       if (_isEditing) {
         final repo = ref.read(taskRepositoryProvider);
@@ -107,10 +119,13 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
             dueDate: _dueDate,
             isRecurring: _recurrence != null,
             recurringRule: _recurrence?.toRrule(),
+            reminderMinutes: _reminderMinutes,
+            estimatedMinutes: int.tryParse(_estimatedController.text),
           ));
+          await tagRepo.setTaskTags(widget.taskId!, _selectedTagIds);
         }
       } else {
-        await notifier.createTask(
+        final task = await notifier.createTask(
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim().isEmpty
               ? null
@@ -120,7 +135,10 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
           dueDate: _dueDate,
           isRecurring: _recurrence != null,
           recurringRule: _recurrence?.toRrule(),
+          reminderMinutes: _reminderMinutes,
+          estimatedMinutes: int.tryParse(_estimatedController.text),
         );
+        await tagRepo.setTaskTags(task.uuid, _selectedTagIds);
       }
       if (mounted) Navigator.pop(context);
     } finally {
@@ -245,14 +263,14 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                               decoration: InputDecoration(
                                 hintText: S.taskTidakAdaKategori,
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      RadiusTokens.sm),
+                                  borderRadius:
+                                      BorderRadius.circular(RadiusTokens.sm),
                                 ),
                                 contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 16, vertical: 14),
                               ),
                               items: [
-                                DropdownMenuItem(
+                                const DropdownMenuItem(
                                   value: null,
                                   child: Text(S.taskTidakAdaKategori),
                                 ),
@@ -274,11 +292,60 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                                       ),
                                     )),
                               ],
-                              onChanged: (v) =>
-                                  setState(() => _categoryId = v),
+                              onChanged: (v) => setState(() => _categoryId = v),
                             );
                           },
                         ),
+                      ),
+                      const SizedBox(height: Spacing.md),
+                      _fieldRow(
+                        icon: Icons.label_outline,
+                        label: 'Label',
+                        child: Consumer(builder: (context, ref, _) {
+                          final tagsAsync = ref.watch(tagListProvider);
+                          return tagsAsync.when(
+                            loading: () => const SizedBox.shrink(),
+                            error: (_, __) => const SizedBox.shrink(),
+                            data: (tags) {
+                              if (tags.isEmpty) {
+                                return const Text('Tidak ada label',
+                                    style: TextStyle(fontSize: 14));
+                              }
+                              return Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                children: tags.map((tag) {
+                                  final selected =
+                                      _selectedTagIds.contains(tag.uuid);
+                                  return FilterChip(
+                                    avatar: Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: Color(tag.color),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    label: Text(tag.name,
+                                        style: const TextStyle(fontSize: 12)),
+                                    selected: selected,
+                                    showCheckmark: false,
+                                    onSelected: (v) {
+                                      setState(() {
+                                        if (v) {
+                                          _selectedTagIds.add(tag.uuid);
+                                        } else {
+                                          _selectedTagIds.remove(tag.uuid);
+                                        }
+                                      });
+                                    },
+                                    visualDensity: VisualDensity.compact,
+                                  );
+                                }).toList(),
+                              );
+                            },
+                          );
+                        }),
                       ),
                       const SizedBox(height: Spacing.md),
                       _fieldRow(
@@ -342,6 +409,53 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: Spacing.md),
+                      _fieldRow(
+                        icon: Icons.notifications_outlined,
+                        label: 'Pengingat',
+                        child: DropdownButtonFormField<int>(
+                          value: _reminderMinutes,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(RadiusTokens.sm),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                                value: 5, child: Text('5 menit sebelumnya')),
+                            DropdownMenuItem(
+                                value: 15, child: Text('15 menit sebelumnya')),
+                            DropdownMenuItem(
+                                value: 30, child: Text('30 menit sebelumnya')),
+                            DropdownMenuItem(
+                                value: 60, child: Text('1 jam sebelumnya')),
+                          ],
+                          onChanged: (v) {
+                            if (v != null) setState(() => _reminderMinutes = v);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: Spacing.md),
+                      _fieldRow(
+                        icon: Icons.timer_outlined,
+                        label: 'Estimasi Waktu',
+                        child: TextFormField(
+                          controller: _estimatedController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            hintText: 'Menit',
+                            border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(RadiusTokens.sm),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 14),
+                          ),
+                        ),
+                      ),
                       if (_isEditing) ...[
                         const SizedBox(height: Spacing.lg),
                         _sectionDivider(),
@@ -351,8 +465,7 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                           child: OutlinedButton.icon(
                             onPressed: () async {
                               final repo = ref.read(taskRepositoryProvider);
-                              final task =
-                                  await repo.getById(widget.taskId!);
+                              final task = await repo.getById(widget.taskId!);
                               if (task != null) {
                                 await ref
                                     .read(taskListProvider.notifier)
@@ -361,7 +474,31 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                               }
                             },
                             icon: const Icon(Icons.archive),
-                            label: Text(S.taskArsipkan),
+                            label: const Text(S.taskArsipkan),
+                          ),
+                        ),
+                        const SizedBox(height: Spacing.sm),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final repo = ref.read(taskRepositoryProvider);
+                              final task = await repo.getById(widget.taskId!);
+                              if (task != null) {
+                                await ref
+                                    .read(taskListProvider.notifier)
+                                    .saveAsTemplate(task);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            S.taskDisimpanSebagaiTemplate)),
+                                  );
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.bookmark_border),
+                            label: const Text(S.taskSimpanSebagaiTemplate),
                           ),
                         ),
                         const SizedBox(height: Spacing.lg),
@@ -387,8 +524,7 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                             )),
                         if (_parentTaskId != null)
                           Padding(
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 8),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
                             child: Text(
                               'Hanya bisa 2 level subtask',
                               style: theme.textTheme.bodySmall?.copyWith(
@@ -409,8 +545,7 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                                       borderRadius: BorderRadius.circular(
                                           RadiusTokens.sm),
                                     ),
-                                    contentPadding: const EdgeInsets
-                                        .symmetric(
+                                    contentPadding: const EdgeInsets.symmetric(
                                         horizontal: 16, vertical: 10),
                                   ),
                                   onSubmitted: (_) => _addSubtask(),
@@ -443,10 +578,7 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
           width: 32,
           height: 4,
           decoration: BoxDecoration(
-            color: Theme.of(context)
-                .colorScheme
-                .onSurface
-                .withOpacity(0.2),
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
             borderRadius: BorderRadius.circular(2),
           ),
         ),

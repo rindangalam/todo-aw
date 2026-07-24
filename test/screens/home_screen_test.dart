@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -10,7 +10,7 @@ import 'package:todoaw/data/repositories/category_repository.dart';
 import 'package:todoaw/data/repositories/task_repository.dart';
 import 'package:todoaw/presentation/screens/home_screen.dart';
 import 'package:todoaw/core/l10n/strings.dart';
-import 'package:todoaw/core/theme.dart';
+import 'package:todoaw/core/design/light_theme.dart';
 
 class MockTaskRepository extends Mock implements TaskRepository {}
 
@@ -21,7 +21,7 @@ Widget createTestApp({
   required CategoryRepository categoryRepo,
 }) {
   return MaterialApp(
-    theme: AppTheme.light,
+    theme: LightTheme.theme,
     home: ProviderScope(
       overrides: [
         taskRepositoryProvider.overrideWithValue(taskRepo),
