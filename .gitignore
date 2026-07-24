@@ -33,6 +33,13 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Project docs & agent config
+/AGENTS.md
+/docs/
+
+# Android build artifacts
+/android/build/
+
 # Symbolication related
 app.*.symbols
 
