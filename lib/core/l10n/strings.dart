@@ -5,9 +5,22 @@ class S {
   static const String appName = 'Todoaw';
   static const String appTagline = 'Jadi lebih teratur';
 
+  static const String settingsHapusData = 'Hapus Data';
+  static const String settingsHapusDataKonfirmasi = 'Yakin hapus data?';
+  static const String settingsHapusDataDeskripsi =
+      'Semua tugas, catatan, kebiasaan, dan data lainnya akan dihapus permanen.';
+  static const String settingsMuatContohKonfirmasi = 'Yakin muat contoh data?';
+  static const String settingsMuatContohDeskripsi =
+      'Data contoh akan ditambahkan ke data yang sudah ada.';
+  static const String yaHapus = 'Ya, Hapus';
+  static const String yaMuat = 'Ya, Muat';
+  static const String settingsHapusContohData = 'Hapus Contoh Data';
+  static const String settingsHapusContohKonfirmasi =
+      'Yakin hapus contoh data?';
+  static const String settingsHapusContohDeskripsi =
+      'Hanya data contoh dari seeder yang akan dihapus. Data yang Anda buat sendiri tetap aman.';
   static const String settingsMuatContohData = 'Muat Contoh Data';
-  static const String settingsDataContohBerhasil =
-      'Data contoh udah siap';
+  static const String settingsDataContohBerhasil = 'Data contoh udah siap';
 
   static const String seedBerhasil = 'Contoh data berhasil ditambahkan';
 
@@ -177,7 +190,7 @@ class S {
   static const String settingsBackup = 'Backup Data';
   static const String settingsRestore = 'Pulihkan Data';
   static const String settingsExportJson = 'Export JSON';
-  static const String settingsExportCsv = 'Export CSV';
+  static const String settingsExportExcel = 'Export Excel';
   static const String settingsExportSqlite = 'Export SQLite';
   static const String settingsImport = 'Import Data';
   static const String settingsKategori = 'Kategori';

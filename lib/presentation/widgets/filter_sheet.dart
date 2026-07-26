@@ -65,7 +65,8 @@ class FilterSheet extends ConsumerWidget {
             spacing: 8,
             children: Priority.values.map((p) {
               final selected = filter.priority == p;
-              return _priorityChip(context, p, selected: selected, onSelected: (_) {
+              return _priorityChip(context, p, selected: selected,
+                  onSelected: (_) {
                 ref.read(filterProvider.notifier).setPriority(p);
               });
             }).toList(),

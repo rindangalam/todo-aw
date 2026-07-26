@@ -79,8 +79,7 @@ class HabitCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: habit.currentStreak > 0
                       ? ColorTokens.warning.withOpacity(0.15)
@@ -90,8 +89,7 @@ class HabitCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (habit.currentStreak > 0)
-                      const _StreakFlame(size: 12),
+                    if (habit.currentStreak > 0) const _StreakFlame(size: 12),
                     Text(
                       '${habit.currentStreak}',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -194,8 +192,9 @@ class _AnimatedCheckCircleState extends State<_AnimatedCheckCircle>
             shape: BoxShape.circle,
             color: widget.isLogged ? widget.color : Colors.transparent,
             border: Border.all(
-              color:
-                  widget.isLogged ? widget.color : widget.color.withOpacity(0.4),
+              color: widget.isLogged
+                  ? widget.color
+                  : widget.color.withOpacity(0.4),
               width: 2,
             ),
           ),

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:excel/excel.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart' as sqlite;
 
@@ -9,71 +11,90 @@ import '../../data/models/category.dart';
 import '../../data/models/focus_session.dart';
 import '../../data/models/habit.dart';
 import '../../data/models/note.dart';
+import '../../data/models/tag.dart';
 import '../../data/models/task.dart';
-import 'package:path/path.dart' as p;
 
 class DataService {
+  static const _channel = MethodChannel('com.todoaw.todoaw/savefile');
+
+  String get _timestamp {
+    final now = DateTime.now();
+    final y = now.year.toString().padLeft(4, '0');
+    final m = now.month.toString().padLeft(2, '0');
+    final d = now.day.toString().padLeft(2, '0');
+    final h = now.hour.toString().padLeft(2, '0');
+    final min = now.minute.toString().padLeft(2, '0');
+    final s = now.second.toString().padLeft(2, '0');
+    return '$y-$m-${d}_$h-$min-$s';
+  }
+
+  Future<String> _saveBytes(Uint8List bytes, String filename) async {
+    try {
+      return await _channel.invokeMethod('saveToDownloads', {
+        'data': bytes,
+        'filename': filename,
+        'mimeType': 'application/octet-stream',
+      });
+    } on MissingPluginException {
+      final dir = await getExternalStorageDirectory();
+      if (dir == null) throw Exception('Gagal mengakses penyimpanan eksternal');
+      final file = File('${dir.path}/$filename');
+      await file.writeAsBytes(bytes);
+      return file.path;
+    }
+  }
+
   Future<String> exportJson() async {
     final data = await _collectAllData();
     final json = const JsonEncoder.withIndent('  ').convert(data);
-    final dir = await _getExportDir();
-    final file = File(p.join(dir.path, 'todoaw_backup.json'));
-    await file.writeAsString(json);
-    return file.path;
+    final bytes = Uint8List.fromList(utf8.encode(json));
+    return _saveBytes(bytes, 'todoaw_backup_$_timestamp.json');
   }
 
-  Future<String> exportCsv() async {
-    final tasks = await AppDatabase.getAllTasks();
-    final buffer = StringBuffer();
-    buffer.writeln('uuid,title,description,isCompleted,priority,categoryId,'
-        'dueDate,isRecurring,recurringRule,parentId,isArchived,deletedAt,'
-        'reminderMinutes,estimatedMinutes,createdAt,updatedAt');
-    for (final t in tasks) {
-      final m = t.toMap();
-      buffer.writeln([
-        m['uuid'],
-        _csvEscape(m['title']),
-        _csvEscape(m['description']),
-        m['isCompleted'],
-        m['priority'],
-        m['categoryId'],
-        m['dueDate'],
-        m['isRecurring'],
-        _csvEscape(m['recurringRule']),
-        m['parentId'],
-        m['isArchived'],
-        m['deletedAt'],
-        m['reminderMinutes'],
-        m['estimatedMinutes'],
-        m['createdAt'],
-        m['updatedAt'],
-      ].join(','));
+  Future<String> exportExcel() async {
+    final xl = Excel.createExcel();
+    final data = await _collectAllData();
+
+    for (final entry in data.entries) {
+      if (entry.key == 'exportedAt' || entry.key == 'version') continue;
+      if (entry.value is! List) continue;
+
+      final sheetName = entry.key;
+      final rows = entry.value as List;
+      if (rows.isEmpty) continue;
+
+      final sheet = xl[sheetName];
+      final headers = (rows.first as Map<String, dynamic>).keys.toList();
+
+      for (var col = 0; col < headers.length; col++) {
+        sheet.cell(CellIndex.indexByColumnRow(
+          columnIndex: col,
+          rowIndex: 0,
+        )).value = headers[col];
+      }
+
+      for (var r = 0; r < rows.length; r++) {
+        final row = rows[r] as Map<String, dynamic>;
+        for (var col = 0; col < headers.length; col++) {
+          final val = row[headers[col]];
+          sheet.cell(CellIndex.indexByColumnRow(
+            columnIndex: col,
+            rowIndex: r + 1,
+          )).value = val;
+        }
+      }
     }
 
-    final dir = await _getExportDir();
-    final file = File(p.join(dir.path, 'todoaw_tasks.csv'));
-    await file.writeAsString(buffer.toString());
-    return file.path;
+    final raw = xl.encode();
+    if (raw == null) throw Exception('Gagal mengencode Excel');
+    return _saveBytes(Uint8List.fromList(raw), 'todoaw_export_$_timestamp.xlsx');
   }
 
   Future<String> exportSqlite() async {
     final dbPath = await sqlite.getDatabasesPath();
-    final source = File(p.join(dbPath, 'todoaw.db'));
-    final dir = await _getExportDir();
-    final dest = File(p.join(dir.path, 'todoaw_backup.db'));
-    await source.copy(dest.path);
-    return dest.path;
-  }
-
-  Future<Directory> _getExportDir() async {
-    if (Platform.isAndroid) {
-      final dir = Directory('/storage/emulated/0/Download/Todoaw');
-      if (!await dir.exists()) {
-        await dir.create(recursive: true);
-      }
-      return dir;
-    }
-    return getApplicationDocumentsDirectory();
+    final source = File('$dbPath/todoaw.db');
+    final bytes = await source.readAsBytes();
+    return _saveBytes(bytes, 'todoaw_backup_$_timestamp.db');
   }
 
   Future<Map<String, dynamic>> _collectAllData() async {
@@ -81,6 +102,10 @@ class DataService {
       'tasks': (await AppDatabase.getAllTasks()).map((t) => t.toMap()).toList(),
       'categories':
           (await AppDatabase.getAllCategories()).map((c) => c.toMap()).toList(),
+      'tags':
+          (await AppDatabase.getAllTags()).map((t) => t.toMap()).toList(),
+      'task_tags':
+          await AppDatabase.instance.query('task_tags'),
       'habits':
           (await AppDatabase.getAllHabits()).map((h) => h.toMap()).toList(),
       'habit_logs':
@@ -93,15 +118,6 @@ class DataService {
     };
   }
 
-  String _csvEscape(dynamic value) {
-    if (value == null) return '';
-    final s = value.toString();
-    if (s.contains(',') || s.contains('"') || s.contains('\n')) {
-      return '"${s.replaceAll('"', '""')}"';
-    }
-    return s;
-  }
-
   Future<void> importJson(String filePath) async {
     final file = File(filePath);
     final content = await file.readAsString();
@@ -111,7 +127,6 @@ class DataService {
       if (data['tasks'] is List) {
         for (final m in data['tasks'] as List) {
           final task = Task.fromMap(m as Map<String, dynamic>);
-          // Use existing UUID to allow re-import of same data
           await txn.insert('tasks', task.toMap(),
               conflictAlgorithm: sqlite.ConflictAlgorithm.replace);
         }
@@ -120,6 +135,19 @@ class DataService {
         for (final m in data['categories'] as List) {
           final cat = Category.fromMap(m as Map<String, dynamic>);
           await txn.insert('categories', cat.toMap(),
+              conflictAlgorithm: sqlite.ConflictAlgorithm.replace);
+        }
+      }
+      if (data['tags'] is List) {
+        for (final m in data['tags'] as List) {
+          final tag = Tag.fromMap(m as Map<String, dynamic>);
+          await txn.insert('tags', tag.toMap(),
+              conflictAlgorithm: sqlite.ConflictAlgorithm.replace);
+        }
+      }
+      if (data['task_tags'] is List) {
+        for (final m in data['task_tags'] as List) {
+          await txn.insert('task_tags', m as Map<String, dynamic>,
               conflictAlgorithm: sqlite.ConflictAlgorithm.replace);
         }
       }

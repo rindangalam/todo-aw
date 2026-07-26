@@ -104,8 +104,7 @@ class _EmptyStateState extends State<EmptyState>
                     textAlign: TextAlign.center,
                   ),
                 ],
-                if (widget.actionLabel != null &&
-                    widget.onAction != null) ...[
+                if (widget.actionLabel != null && widget.onAction != null) ...[
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: widget.onAction,

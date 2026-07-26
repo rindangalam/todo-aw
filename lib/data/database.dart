@@ -573,4 +573,17 @@ class AppDatabase {
     );
     return maps.map((m) => m['taskId'] as String).toList();
   }
+
+  static Future<void> deleteAllData() async {
+    final batch = instance.batch();
+    batch.delete('task_tags');
+    batch.delete('tasks');
+    batch.delete('notes');
+    batch.delete('habit_logs');
+    batch.delete('habits');
+    batch.delete('focus_sessions');
+    batch.delete('tags');
+    batch.delete('categories');
+    await batch.commit(noResult: true);
+  }
 }

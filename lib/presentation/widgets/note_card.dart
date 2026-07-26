@@ -23,8 +23,7 @@ class NoteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final bgColor =
-        Color(note.color).withOpacity(isDark ? 0.25 : 0.65);
+    final bgColor = Color(note.color).withOpacity(isDark ? 0.25 : 0.65);
 
     final card = Card(
       elevation: 1,

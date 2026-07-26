@@ -43,7 +43,7 @@ class _IntroSlidesState extends State<IntroSlides> {
                 controller: _controller,
                 onPageChanged: (i) => setState(() => _currentPage = i),
                 children: [
-                    _SlideContent(
+                  _SlideContent(
                     icon: Icons.checklist_rtl,
                     title: 'Atur Tugas Harian',
                     description:
@@ -55,7 +55,8 @@ class _IntroSlidesState extends State<IntroSlides> {
                   _SlideContent(
                     icon: Icons.sticky_note_2_outlined,
                     title: 'Catatan & Kebiasaan',
-                    description: 'Ide mendadak langsung catat. Catatan favorit? '
+                    description:
+                        'Ide mendadak langsung catat. Catatan favorit? '
                         'Sematkan biar gampang dicari. Kebiasaan baik dijagain tiap hari.',
                     color: const Color(0xFF8B5CF6),
                     isDark: isDark,

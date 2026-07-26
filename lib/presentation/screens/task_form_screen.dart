@@ -559,6 +559,31 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                             ],
                           ),
                       ],
+                      const SizedBox(height: Spacing.xl),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _save,
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  S.simpan,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: Spacing.lg),
                     ],
                   ),
                 ),
@@ -588,7 +613,6 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
 
   Widget _header(ThemeData theme) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
           icon: const Icon(Icons.close),
@@ -598,22 +622,6 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
           _isEditing ? S.taskEdit : S.taskBaru,
           style: theme.textTheme.titleMedium
               ?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        TextButton(
-          onPressed: _isLoading ? null : _save,
-          child: _isLoading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(
-                  S.simpan,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
         ),
       ],
     );

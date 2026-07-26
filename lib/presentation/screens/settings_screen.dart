@@ -1,9 +1,15 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/strings.dart';
+import '../../data/database.dart';
 import '../../providers/data_service_provider.dart';
+import '../../providers/habit_provider.dart';
+import '../../providers/note_provider.dart';
+import '../../providers/stats_provider.dart';
+import '../../providers/task_list_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/seed_data.dart';
 import '../../services/tour_service.dart';
@@ -96,9 +102,10 @@ class SettingsScreen extends ConsumerWidget {
             onExport: () => ref.read(dataServiceProvider).exportJson(),
           ),
           _ExportTile(
-            icon: Icons.file_download,
-            title: S.settingsExportCsv,
-            onExport: () => ref.read(dataServiceProvider).exportCsv(),
+            icon: Icons.table_chart_outlined,
+            title: S.settingsExportExcel,
+            subtitle: 'Semua data (.xlsx)',
+            onExport: () => ref.read(dataServiceProvider).exportExcel(),
           ),
           _ExportTile(
             icon: Icons.storage,
@@ -109,12 +116,17 @@ class SettingsScreen extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.dataset_outlined),
             title: const Text(S.settingsMuatContohData),
-            onTap: () async {
-              await seedIfEmpty();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text(S.settingsDataContohBerhasil)),
-              );
-            },
+            onTap: () => _confirmMuatContoh(context, ref),
+          ),
+          ListTile(
+            leading: const Icon(Icons.cleaning_services_outlined),
+            title: const Text(S.settingsHapusContohData),
+            onTap: () => _confirmHapusContoh(context, ref),
+          ),
+          ListTile(
+            leading: const Icon(Icons.delete_forever_outlined),
+            title: const Text(S.settingsHapusData),
+            onTap: () => _confirmHapusData(context, ref),
           ),
           ListTile(
             leading: const Icon(Icons.tour_outlined),
@@ -138,7 +150,7 @@ class SettingsScreen extends ConsumerWidget {
 
   Future<String> _restoreData(BuildContext context, WidgetRef ref) async {
     try {
-      final filePath = await _pickJsonFile(context);
+      final filePath = await _pickJsonFile();
       if (filePath == null) return 'Dibatalkan';
       await ref.read(dataServiceProvider).importJson(filePath);
       // ignore: use_build_context_synchronously
@@ -155,35 +167,107 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  Future<String?> _pickJsonFile(BuildContext context) async {
-    // Simple file dialog using TextField for file path input
-    final controller = TextEditingController();
-    final path = await showDialog<String>(
+  Future<String?> _pickJsonFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+      if (result == null || result.files.isEmpty) return null;
+      return result.files.single.path;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> _confirmHapusContoh(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Pilih file backup'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: '/storage/emulated/0/Download/Todoaw/todoaw_backup.json',
-            labelText: 'Path file .json',
-          ),
-        ),
+        title: const Text(S.settingsHapusContohKonfirmasi),
+        content: const Text(S.settingsHapusContohDeskripsi),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal'),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(S.batal),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('Pulihkan'),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Hapus'),
           ),
         ],
       ),
     );
-    controller.dispose();
-    if (path == null || path.isEmpty) return null;
-    return path;
+    if (confirm != true) return;
+    await deleteSeedData();
+    ref.invalidate(taskListProvider);
+    ref.invalidate(noteListProvider);
+    ref.invalidate(habitListProvider);
+    ref.invalidate(statsProvider);
+    // ignore: use_build_context_synchronously
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Data contoh berhasil dihapus')),
+    );
+  }
+
+  Future<void> _confirmHapusData(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(S.settingsHapusDataKonfirmasi),
+        content: const Text(S.settingsHapusDataDeskripsi),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(S.batal),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(S.yaHapus),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    await AppDatabase.deleteAllData();
+    ref.invalidate(taskListProvider);
+    ref.invalidate(noteListProvider);
+    ref.invalidate(habitListProvider);
+    ref.invalidate(statsProvider);
+    // ignore: use_build_context_synchronously
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Semua data berhasil dihapus')),
+    );
+  }
+
+  Future<void> _confirmMuatContoh(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(S.settingsMuatContohKonfirmasi),
+        content: const Text(S.settingsMuatContohDeskripsi),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(S.batal),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(S.yaMuat),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    await seedIfEmpty(force: true, append: true);
+    ref.invalidate(taskListProvider);
+    ref.invalidate(noteListProvider);
+    ref.invalidate(habitListProvider);
+    ref.invalidate(statsProvider);
+    // ignore: use_build_context_synchronously
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text(S.settingsDataContohBerhasil)),
+    );
   }
 }
 

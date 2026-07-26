@@ -5,6 +5,7 @@ import '../data/repositories/task_repository.dart';
 import '../domain/services/notification_service.dart';
 import '../domain/services/recurring_task_service.dart';
 import '../services/widget_bridge.dart';
+import 'stats_provider.dart';
 
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
   return TaskRepository();
@@ -12,7 +13,7 @@ final taskRepositoryProvider = Provider<TaskRepository>((ref) {
 
 final taskListProvider =
     StateNotifierProvider<TaskListNotifier, AsyncValue<List<Task>>>((ref) {
-  return TaskListNotifier(ref.read(taskRepositoryProvider));
+  return TaskListNotifier(ref.read(taskRepositoryProvider), ref);
 });
 
 final archivedTaskListProvider = FutureProvider<List<Task>>((ref) {
@@ -25,9 +26,11 @@ final templateListProvider = FutureProvider<List<Task>>((ref) {
 
 class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
   final TaskRepository _repository;
+  final Ref _ref;
   final _recurringService = RecurringTaskService();
 
-  TaskListNotifier(this._repository) : super(const AsyncValue.loading()) {
+  TaskListNotifier(this._repository, this._ref)
+      : super(const AsyncValue.loading()) {
     load();
   }
 
@@ -52,6 +55,8 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
           .toList(),
     );
     await _repository.update(updated);
+
+    _ref.invalidate(statsProvider);
 
     // If recurring task was completed, generate next occurrence
     if (updated.isCompleted && task.isRecurring) {
@@ -93,21 +98,21 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     if (task.dueDate != null) {
       _scheduleNotification(task.copyWith(reminderMinutes: reminderMinutes));
     }
+    _ref.invalidate(statsProvider);
     await load();
     return task;
   }
 
   Future<void> updateTask(Task task) async {
     state = AsyncValue.data(
-      (state.value ?? [])
-          .map((t) => t.uuid == task.uuid ? task : t)
-          .toList(),
+      (state.value ?? []).map((t) => t.uuid == task.uuid ? task : t).toList(),
     );
     await NotificationService.cancelNotification(task.uuid);
     if (task.dueDate != null) {
       _scheduleNotification(task);
     }
     await _repository.update(task);
+    _ref.invalidate(statsProvider);
     WidgetBridge.updateWidget();
   }
 
@@ -133,6 +138,7 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     );
     await NotificationService.cancelNotification(task.uuid);
     await _repository.softDelete(task.uuid);
+    _ref.invalidate(statsProvider);
     WidgetBridge.updateWidget();
   }
 
@@ -150,6 +156,7 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
         await _repository.update(task.copyWith(isCompleted: true));
       }
     }
+    _ref.invalidate(statsProvider);
     WidgetBridge.updateWidget();
   }
 
@@ -173,6 +180,7 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     for (final id in ids) {
       await _repository.softDelete(id);
     }
+    _ref.invalidate(statsProvider);
     WidgetBridge.updateWidget();
   }
 
@@ -189,6 +197,7 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     if (task.dueDate != null) {
       _scheduleNotification(task);
     }
+    _ref.invalidate(statsProvider);
     await load();
     return task;
   }

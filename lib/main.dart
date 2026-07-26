@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+﻿import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +15,6 @@ import 'core/l10n/strings.dart';
 import 'presentation/router.dart';
 import 'providers/theme_provider.dart';
 import 'domain/services/notification_service.dart';
-import 'services/seed_data.dart';
 import 'services/tour_service.dart';
 import 'services/widget_bridge.dart';
 import 'data/repositories/task_repository.dart';
@@ -25,7 +24,6 @@ void main() async {
   Intl.defaultLocale = Platform.localeName;
   await initializeDateFormatting();
   await AppDatabase.init();
-  await seedIfEmpty();
   await NotificationService.init();
   await SharedPreferences.getInstance();
   await TaskRepository().purgeOldTrash();

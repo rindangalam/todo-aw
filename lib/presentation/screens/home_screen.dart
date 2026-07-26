@@ -87,8 +87,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             align: ContentAlign.bottom,
             builder: (context, controller) => TourCard(
               title: 'Akses Cepat',
-              body:
-                  'Pengen cepet-cepet? Langsung tambah tugas, catatan, '
+              body: 'Pengen cepet-cepet? Langsung tambah tugas, catatan, '
                   'fokus, atau kebiasaan dari sini.',
               onNext: controller.next,
             ),
@@ -107,8 +106,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             align: ContentAlign.bottom,
             builder: (context, controller) => TourCard(
               title: 'Filter & Cari',
-              body:
-                  'Tugas numpuk? Filter prioritas, kategori, atau status. '
+              body: 'Tugas numpuk? Filter prioritas, kategori, atau status. '
                   'Mau nyari? Tinggal tap ikon kaca pembesar.',
               onNext: controller.next,
             ),
@@ -126,8 +124,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             align: ContentAlign.top,
             builder: (context, controller) => TourCard(
               title: 'Tambah Tugas',
-              body:
-                  'Tap + buat tugas baru. Geser kanan kalau selesai, '
+              body: 'Tap + buat tugas baru. Geser kanan kalau selesai, '
                   'geser kiri kalau mau hapus. Gampang.',
               onNext: controller.next,
             ),
@@ -731,7 +728,6 @@ class _TaskSection extends StatelessWidget {
               ),
             ),
           );
-          // Wrap with long-press handler
           return GestureDetector(
             key: ValueKey(task.uuid),
             onLongPress: () {

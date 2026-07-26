@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../data/database.dart';
@@ -11,18 +14,78 @@ import '../data/repositories/tag_repository.dart';
 final _uuid = const Uuid();
 final _tagRepo = TagRepository();
 
-Future<void> seedIfEmpty() async {
-  try {
-    final tasks = await AppDatabase.getActiveTasks();
-    if (tasks.isNotEmpty) return;
-  } catch (_) {
-    return;
+class SeedTracker {
+  static const _key = 'seeded_uuids';
+
+  static Future<void> save(Map<String, List<String>> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, jsonEncode(data));
+  }
+
+  static Future<Map<String, List<String>>> get() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_key);
+    if (raw == null) return {};
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    return decoded.map((k, v) => MapEntry(k, List<String>.from(v as List)));
+  }
+
+  static Future<void> clear() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
+  }
+}
+
+Future<void> deleteSeedData() async {
+  final uuids = await SeedTracker.get();
+  final batch = AppDatabase.instance.batch();
+
+  for (final entry in uuids.entries) {
+    final table = entry.key;
+    if (table == 'task_tags') continue;
+    for (final uuid in entry.value) {
+      batch.delete(table, where: 'uuid = ?', whereArgs: [uuid]);
+    }
+  }
+
+  final taskUuids = uuids['tasks'] ?? [];
+  final tagUuids = uuids['tags'] ?? [];
+  for (final taskId in taskUuids) {
+    batch.delete('task_tags', where: 'taskId = ?', whereArgs: [taskId]);
+  }
+  for (final tagId in tagUuids) {
+    batch.delete('task_tags', where: 'tagId = ?', whereArgs: [tagId]);
+  }
+
+  await batch.commit(noResult: true);
+  await SeedTracker.clear();
+}
+
+Future<void> seedIfEmpty({bool force = false, bool append = false}) async {
+  if (!force) {
+    try {
+      final tasks = await AppDatabase.getActiveTasks();
+      if (tasks.isNotEmpty) return;
+    } catch (_) {
+      return;
+    }
+  } else if (!append) {
+    await AppDatabase.deleteAllData();
   }
 
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   final tomorrow = today.add(const Duration(days: 1));
   final dayAfter = today.add(const Duration(days: 2));
+
+  final tracked = <String, List<String>>{
+    'tasks': [],
+    'notes': [],
+    'categories': [],
+    'tags': [],
+    'habits': [],
+    'habit_logs': [],
+  };
 
   // ── Category ──
   final categoryId = _uuid.v4();
@@ -33,6 +96,7 @@ Future<void> seedIfEmpty() async {
     icon: 'work',
     sortOrder: 0,
   ));
+  tracked['categories']!.add(categoryId);
 
   // ── Tags ──
   final tagPrioritas =
@@ -41,6 +105,13 @@ Future<void> seedIfEmpty() async {
   final tagBackend = await _tagRepo.create(name: 'backend', color: 0xFF10B981);
   final tagRumah = await _tagRepo.create(name: 'rumah', color: 0xFFF59E0B);
   final tagBelajar = await _tagRepo.create(name: 'belajar', color: 0xFF6366F1);
+  tracked['tags']!.addAll([
+    tagPrioritas.uuid,
+    tagDesain.uuid,
+    tagBackend.uuid,
+    tagRumah.uuid,
+    tagBelajar.uuid,
+  ]);
 
   // ── Tasks ──
   final task1Id = _uuid.v4();
@@ -132,6 +203,16 @@ Future<void> seedIfEmpty() async {
     createdAt: now,
     updatedAt: now,
   ));
+  tracked['tasks']!.addAll([
+    task1Id,
+    task2Id,
+    task3Id,
+    task4Id,
+    task5Id,
+    task6Id,
+    task7Id,
+    task8Id,
+  ]);
 
   // ── Task-Tag relations ──
   await AppDatabase.setTaskTags(task1Id, [tagRumah.uuid]);
@@ -143,8 +224,12 @@ Future<void> seedIfEmpty() async {
   await AppDatabase.setTaskTags(task8Id, [tagPrioritas.uuid]);
 
   // ── Notes ──
+  final note1Id = _uuid.v4();
+  final note2Id = _uuid.v4();
+  final note3Id = _uuid.v4();
+
   await AppDatabase.insertNote(Note(
-    uuid: _uuid.v4(),
+    uuid: note1Id,
     title: 'Ide fitur baru',
     content:
         'Mode gelap otomatis berdasarkan jadwal\nIntegrasi Google Calendar\nEkspor data ke CSV',
@@ -153,7 +238,7 @@ Future<void> seedIfEmpty() async {
     updatedAt: now,
   ));
   await AppDatabase.insertNote(Note(
-    uuid: _uuid.v4(),
+    uuid: note2Id,
     title: 'Catatan meeting',
     content:
         'Hadir: Tim developer (5 orang)\nAgenda:\n- Review sprint sebelumnya\n- Planning sprint berikutnya\n- Diskusi teknis migrasi database',
@@ -162,7 +247,7 @@ Future<void> seedIfEmpty() async {
     updatedAt: now,
   ));
   await AppDatabase.insertNote(Note(
-    uuid: _uuid.v4(),
+    uuid: note3Id,
     title: 'Resep masakan',
     content:
         'Nasi goreng spesial:\n- Nasi putih 2 piring\n- Telur 2 butir\n- Ayam suwir\n- Kecap manis & saus sambal\n- Bawang merah, bawang putih, daun bawang',
@@ -171,6 +256,7 @@ Future<void> seedIfEmpty() async {
     createdAt: now.subtract(const Duration(days: 1)),
     updatedAt: now,
   ));
+  tracked['notes']!.addAll([note1Id, note2Id, note3Id]);
 
   // ── Habits ──
   final habit1Id = _uuid.v4();
@@ -196,22 +282,31 @@ Future<void> seedIfEmpty() async {
     createdAt: now.subtract(const Duration(days: 30)),
     updatedAt: now,
   ));
+  tracked['habits']!.addAll([habit1Id, habit2Id]);
 
   // ── Habit logs (hari ini) ──
-  await AppDatabase.insertHabitLog(
-    _makeLog(habit1Id, today, 3, now),
-  );
-  await AppDatabase.insertHabitLog(
-    _makeLog(habit2Id, today, 1, now),
-  );
-}
+  final log1Id = _uuid.v4();
+  final log2Id = _uuid.v4();
 
-HabitLog _makeLog(String habitId, DateTime date, int count, DateTime now) {
-  return HabitLog(
-    uuid: _uuid.v4(),
-    habitId: habitId,
-    date: date,
-    isCompleted: count > 0,
-    createdAt: now,
+  await AppDatabase.insertHabitLog(
+    HabitLog(
+      uuid: log1Id,
+      habitId: habit1Id,
+      date: today,
+      isCompleted: true,
+      createdAt: now,
+    ),
   );
+  await AppDatabase.insertHabitLog(
+    HabitLog(
+      uuid: log2Id,
+      habitId: habit2Id,
+      date: today,
+      isCompleted: true,
+      createdAt: now,
+    ),
+  );
+  tracked['habit_logs']!.addAll([log1Id, log2Id]);
+
+  await SeedTracker.save(tracked);
 }

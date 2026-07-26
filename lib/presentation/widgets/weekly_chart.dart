@@ -63,8 +63,7 @@ class WeeklyChart extends StatelessWidget {
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color:
-                                theme.colorScheme.onSurface.withOpacity(0.6),
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
                           ),
                         ),
                       ),

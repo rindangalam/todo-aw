@@ -309,7 +309,9 @@ class _ColorPickerSheetState extends State<ColorPickerSheet>
                 ]
               : null,
         ),
-        transform: isSelected ? Matrix4.diagonal3Values(1.15, 1.15, 1) : Matrix4.identity(),
+        transform: isSelected
+            ? Matrix4.diagonal3Values(1.15, 1.15, 1)
+            : Matrix4.identity(),
         child: isSelected
             ? const Center(
                 child: Icon(Icons.check, size: 18, color: Colors.white),

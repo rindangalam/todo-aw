@@ -72,8 +72,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
             align: ContentAlign.top,
             builder: (context, controller) => TourCard(
               title: 'Tambah Catatan',
-              body:
-                  'Tap + buat catatan baru — kasih judul, isi, warna, '
+              body: 'Tap + buat catatan baru — kasih judul, isi, warna, '
                   'dan sematkan kalau penting.',
               onNext: controller.next,
             ),

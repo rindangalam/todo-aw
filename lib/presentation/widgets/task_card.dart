@@ -201,15 +201,14 @@ class TaskCard extends StatelessWidget {
                           Icon(
                             Icons.schedule,
                             size: 12,
-                            color:
-                                theme.colorScheme.onSurface.withOpacity(0.5),
+                            color: theme.colorScheme.onSurface.withOpacity(0.5),
                           ),
                           const SizedBox(width: 2),
                           Text(
                             _formatDate(task.dueDate!),
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface
-                                  .withOpacity(0.5),
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.5),
                             ),
                           ),
                           const SizedBox(width: 8),
