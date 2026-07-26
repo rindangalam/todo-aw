@@ -21,6 +21,43 @@ import '../core/l10n/strings.dart';
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
 
+Page<dynamic> _slideFromRight(Widget child) {
+  return CustomTransitionPage<dynamic>(
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0.3, 0.0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        )),
+        child: FadeTransition(
+          opacity: animation,
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
+Page<dynamic> _fadeIn(Widget child) {
+  return CustomTransitionPage<dynamic>(
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: animation,
+        child: child,
+      );
+    },
+  );
+}
+
+Page<dynamic> _noTransition(Widget child) {
+  return NoTransitionPage<dynamic>(child: child);
+}
+
 GoRouter appRouter({String initialLocation = '/splash'}) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
@@ -29,12 +66,12 @@ GoRouter appRouter({String initialLocation = '/splash'}) {
       GoRoute(
         path: '/splash',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const SplashScreen(),
+        pageBuilder: (context, state) => _fadeIn(const SplashScreen()),
       ),
       GoRoute(
         path: '/intro',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const IntroSlides(),
+        pageBuilder: (context, state) => _fadeIn(const IntroSlides()),
       ),
       ShellRoute(
         builder: (context, state, child) {
@@ -61,60 +98,66 @@ GoRouter appRouter({String initialLocation = '/splash'}) {
         routes: [
           GoRoute(
             path: '/',
-            builder: (context, state) => const HomeScreen(),
+            pageBuilder: (context, state) => _noTransition(const HomeScreen()),
           ),
           GoRoute(
             path: '/calendar',
-            builder: (context, state) => const CalendarScreen(),
+            pageBuilder: (context, state) =>
+                _noTransition(const CalendarScreen()),
           ),
           GoRoute(
             path: '/dashboard',
-            builder: (context, state) => const DashboardScreen(),
+            pageBuilder: (context, state) =>
+                _noTransition(const DashboardScreen()),
           ),
           GoRoute(
             path: '/notes',
-            builder: (context, state) => const NotesScreen(),
+            pageBuilder: (context, state) =>
+                _noTransition(const NotesScreen()),
           ),
           GoRoute(
             path: '/settings',
-            builder: (context, state) => const SettingsScreen(),
+            pageBuilder: (context, state) =>
+                _noTransition(const SettingsScreen()),
           ),
         ],
       ),
       GoRoute(
         path: '/search',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const SearchScreen(),
+        pageBuilder: (context, state) => _slideFromRight(const SearchScreen()),
       ),
       GoRoute(
         path: '/trash',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const TrashScreen(),
+        pageBuilder: (context, state) => _slideFromRight(const TrashScreen()),
       ),
       GoRoute(
         path: '/archive',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const ArchiveScreen(),
+        pageBuilder: (context, state) =>
+            _slideFromRight(const ArchiveScreen()),
       ),
       GoRoute(
         path: '/categories',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const CategoriesScreen(),
+        pageBuilder: (context, state) =>
+            _slideFromRight(const CategoriesScreen()),
       ),
       GoRoute(
         path: '/tags',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const TagsScreen(),
+        pageBuilder: (context, state) => _slideFromRight(const TagsScreen()),
       ),
       GoRoute(
         path: '/habits',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const HabitsScreen(),
+        pageBuilder: (context, state) => _slideFromRight(const HabitsScreen()),
       ),
       GoRoute(
         path: '/focus',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const FocusScreen(),
+        pageBuilder: (context, state) => _slideFromRight(const FocusScreen()),
       ),
     ],
   );

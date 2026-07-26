@@ -1,7 +1,9 @@
 package com.todoaw.todoaw
 
 import android.content.ContentValues
+import android.content.Intent
 import android.os.Build
+import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import androidx.annotation.NonNull
@@ -12,11 +14,14 @@ import java.io.File
 import java.io.FileOutputStream
 
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.todoaw.todoaw/savefile"
+    private val SAVE_CHANNEL = "com.todoaw.todoaw/savefile"
+    private val ACTION_CHANNEL = "com.todoaw.todoaw/widget_action"
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+
+        // Save file channel (existing)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SAVE_CHANNEL).setMethodCallHandler { call, result ->
             if (call.method == "saveToDownloads") {
                 val data = call.argument<ByteArray>("data")
                     ?: return@setMethodCallHandler result.error("NO_DATA", "data is null", null)
@@ -33,6 +38,28 @@ class MainActivity : FlutterActivity() {
                 result.notImplemented()
             }
         }
+
+        // Widget action channel (new)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ACTION_CHANNEL).setMethodCallHandler { call, result ->
+            if (call.method == "getPendingAction") {
+                val action = intent?.getStringExtra("action") ?: ""
+                val taskUuid = intent?.getStringExtra("task_uuid") ?: ""
+                if (action.isNotEmpty()) {
+                    result.success(mapOf("action" to action, "taskUuid" to taskUuid))
+                    intent?.removeExtra("action")
+                    intent?.removeExtra("task_uuid")
+                } else {
+                    result.success(null)
+                }
+            } else {
+                result.notImplemented()
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
     }
 
     private fun saveFileToDownloads(data: ByteArray, filename: String, mimeType: String): String {

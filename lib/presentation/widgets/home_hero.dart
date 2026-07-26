@@ -178,47 +178,17 @@ class _GreetingRowState extends State<_GreetingRow>
     super.dispose();
   }
 
-  String _greetingWithWave() {
-    final hour = DateTime.now().hour;
-    if (hour < 11) {
-      return '${S.greetingPagi} \u{1F44B}';
-    } else if (hour < 15) {
-      return '${S.greetingSiang} \u{1F44B}';
-    } else if (hour < 18) {
-      return '${S.greetingSore} \u{1F44B}';
-    }
-    return '${S.greetingMalam} \u{1F44B}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 400),
-              transitionBuilder: (child, anim) =>
-                  FadeTransition(opacity: anim, child: child),
-              child: Text(
-                _greetingWithWave(),
-                key: ValueKey(DateTime.now().hour),
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              S.appTagline,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
-              ),
-            ),
-          ],
+        Text(
+          S.appTagline,
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
+          ),
         ),
         if (widget.streak > 0)
           AnimatedBuilder(

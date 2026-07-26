@@ -47,6 +47,24 @@ class WidgetBridge {
       final completed = total - pending.length;
       final progress = total > 0 ? (completed * 100 ~/ total) : 0;
 
+      // time-based sticker
+      final hour = now.hour;
+      final timeSticker = hour >= 5 && hour < 12
+          ? 'sun'
+          : hour >= 12 && hour < 18
+              ? 'sparkle'
+              : 'moon';
+
+      // celebration mode (all tasks done)
+      final celebration = total > 0 && completed == total ? 'confetti' : '';
+
+      // fire mode (high streak)
+      final streakMode = streak >= 5 ? 'fire' : '';
+
+      // manual sticker from settings
+      final manualSticker = prefs.getString('widget_sticker') ?? '';
+      final customStickerText = prefs.getString('widget_sticker_text') ?? '';
+
       await HomeWidget.saveWidgetData(
           'pendingCount', pending.length.toString());
       await HomeWidget.saveWidgetData('completedCount', completed.toString());
@@ -59,9 +77,17 @@ class WidgetBridge {
           'accentColor', accentValue.toRadixString(16).padLeft(8, '0'));
       await HomeWidget.saveWidgetData(
           'textColor', textColor.toRadixString(16).padLeft(8, '0'));
+      await HomeWidget.saveWidgetData('timeSticker', timeSticker);
+      await HomeWidget.saveWidgetData('celebration', celebration);
+      await HomeWidget.saveWidgetData('streakMode', streakMode);
+      await HomeWidget.saveWidgetData('manualSticker', manualSticker);
+      await HomeWidget.saveWidgetData('customStickerText', customStickerText);
 
       final titles = pending.take(5).map((t) => t.title).toList();
       await HomeWidget.saveWidgetData('taskList', jsonEncode(titles));
+
+      final uuids = pending.take(5).map((t) => t.uuid).toList();
+      await HomeWidget.saveWidgetData('taskUuids', jsonEncode(uuids));
 
       const pkg = 'com.todoaw.todoaw';
       await HomeWidget.updateWidget(

@@ -31,12 +31,6 @@ class S {
   static const String navCatatan = 'Catatan';
   static const String navPengaturan = 'Pengaturan';
 
-  // Greeting
-  static const String greetingPagi = 'Selamat Pagi';
-  static const String greetingSiang = 'Selamat Siang';
-  static const String greetingSore = 'Selamat Sore';
-  static const String greetingMalam = 'Selamat Malam';
-
   // Home
   static const String homeTugasHariIni = 'tugas hari ini';
   static const String homeSelesai = 'selesai';
@@ -182,6 +176,8 @@ class S {
   // Settings
   static const String settingsTitle = 'Pengaturan';
   static const String settingsTampilan = 'TAMPILAN';
+  static const String settingsStiker = 'STIKER WIDGET';
+  static const String settingsStikerNone = 'Tanpa Stiker';
   static const String settingsModeGelap = 'Mode Gelap';
   static const String settingsModeSystem = 'Sistem';
   static const String settingsModeLight = 'Terang';

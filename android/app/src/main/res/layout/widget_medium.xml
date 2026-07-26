@@ -47,6 +47,38 @@
                 android:textSize="10sp"
                 android:textStyle="bold"
                 android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/iv_fire_big"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginStart="3dp"
+                android:src="@drawable/ic_sticker_fire_big"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/iv_time_sticker"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginStart="4dp"
+                android:src="@drawable/ic_sticker_sparkle"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/iv_manual_sticker"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="3dp"
+                android:src="@drawable/ic_sticker_sparkle"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/widget_sticker_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="3dp"
+                android:textSize="20sp"
+                android:visibility="gone" />
         </LinearLayout>
 
         <!-- Progress bar -->
@@ -138,7 +170,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- Footer: remaining tasks -->
+        <!-- Footer: remaining tasks + add button -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -155,11 +187,19 @@
 
             <TextView
                 android:id="@+id/widget_remaining_text"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:layout_marginStart="4dp"
                 android:textSize="8sp"
                 android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/btn_add_task"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_sticker_plus"
+                android:padding="2dp" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/l10n/strings.dart';
 import '../../data/database.dart';
@@ -13,10 +14,24 @@ import '../../providers/task_list_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/seed_data.dart';
 import '../../services/tour_service.dart';
+import '../../services/widget_bridge.dart';
 import '../widgets/color_picker_sheet.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
+
+  static const _stickers = [
+    _StickerItem('sparkle', '✨', 'Sparkle'),
+    _StickerItem('sun', '☀️', 'Sun'),
+    _StickerItem('moon', '🌙', 'Moon'),
+    _StickerItem('flower', '🌸', 'Flower'),
+    _StickerItem('star', '⭐', 'Star'),
+    _StickerItem('heart', '❤️', 'Heart'),
+    _StickerItem('smile', '😊', 'Smile'),
+    _StickerItem('lightning', '⚡', 'Lightning'),
+    _StickerItem('music', '🎵', 'Music'),
+    _StickerItem('party', '🎊', 'Party'),
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -59,6 +74,9 @@ class SettingsScreen extends ConsumerWidget {
                 ref.read(themeModeProvider.notifier).setMode(ThemeMode.dark),
           ),
           _AccentColorTile(),
+          const Divider(height: 1),
+          const _SectionHeader(title: S.settingsStiker),
+          const _StickerTile(),
           const Divider(height: 1),
           const _SectionHeader(title: S.settingsData),
           ListTile(
@@ -271,6 +289,314 @@ class SettingsScreen extends ConsumerWidget {
   }
 }
 
+class _StickerItem {
+  final String name;
+  final String emoji;
+  final String label;
+  const _StickerItem(this.name, this.emoji, this.label);
+}
+
+class _StickerTile extends ConsumerStatefulWidget {
+  const _StickerTile();
+
+  @override
+  ConsumerState<_StickerTile> createState() => _StickerTileState();
+}
+
+class _StickerTileState extends ConsumerState<_StickerTile> {
+  String _selected = '';
+  String _customText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _selected = prefs.getString('widget_sticker') ?? '';
+        _customText = prefs.getString('widget_sticker_text') ?? '';
+      });
+    }
+  }
+
+  String get _previewEmoji {
+    if (_selected.isEmpty) return '\u{1F6AB}';
+    if (_selected == 'custom') return _customText.isNotEmpty ? _customText : '\u270F\uFE0F';
+    final i = SettingsScreen._stickers.indexWhere((s) => s.name == _selected);
+    if (i < 0) return '\u{1F6AB}';
+    return SettingsScreen._stickers[i].emoji;
+  }
+
+  String get _label {
+    if (_selected.isEmpty) return S.settingsStikerNone;
+    if (_selected == 'custom') return _customText.isNotEmpty ? _customText : 'Kustom';
+    final i = SettingsScreen._stickers.indexWhere((s) => s.name == _selected);
+    if (i < 0) return S.settingsStikerNone;
+    return SettingsScreen._stickers[i].label;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Text(_previewEmoji, style: const TextStyle(fontSize: 28)),
+      title: const Text(S.settingsStiker),
+      subtitle: Text(_label),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => _openPicker(context),
+    );
+  }
+
+  Future<void> _openPicker(BuildContext context) async {
+    final result = await showStickerPicker(
+      context: context,
+      initial: _selected,
+      initialCustom: _customText,
+    );
+    if (result == null || !mounted) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    if (result.name == 'custom') {
+      await prefs.setString('widget_sticker', 'custom');
+      await prefs.setString('widget_sticker_text', result.customText);
+    } else {
+      await prefs.setString('widget_sticker', result.name);
+      await prefs.remove('widget_sticker_text');
+    }
+
+    setState(() {
+      _selected = result.name;
+      _customText = result.name == 'custom' ? result.customText : '';
+    });
+
+    WidgetBridge.updateWidget();
+  }
+}
+
+class _StickerPickerResult {
+  final String name;
+  final String customText;
+  const _StickerPickerResult(this.name, this.customText);
+}
+
+Future<_StickerPickerResult?> showStickerPicker({
+  required BuildContext context,
+  required String initial,
+  required String initialCustom,
+}) {
+  return showModalBottomSheet<_StickerPickerResult>(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) => _StickerPickerSheet(
+      initial: initial,
+      initialCustom: initialCustom,
+    ),
+  );
+}
+
+class _StickerPickerSheet extends StatefulWidget {
+  final String initial;
+  final String initialCustom;
+
+  const _StickerPickerSheet({
+    required this.initial,
+    required this.initialCustom,
+  });
+
+  @override
+  State<_StickerPickerSheet> createState() => _StickerPickerSheetState();
+}
+
+class _StickerPickerSheetState extends State<_StickerPickerSheet> {
+  late TextEditingController _controller;
+  late String _selected;
+  late String _customText;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.initial;
+    _customText = widget.initialCustom;
+    _controller = TextEditingController(
+      text: _selected == 'custom' ? _customText : '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = Theme.of(context).colorScheme.primary;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + bottomInset),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Stiker Widget',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  decoration: const InputDecoration(
+                    hintText: 'Ketik emoji atau teks...',
+                    border: OutlineInputBorder(),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    isDense: true,
+                  ),
+                  maxLength: 10,
+                  onChanged: (value) {
+                    setState(() {
+                      _customText = value;
+                      if (value.isNotEmpty) {
+                        _selected = 'custom';
+                      }
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: _selected == 'custom'
+                      ? accent.withOpacity(0.12)
+                      : null,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _selected == 'custom' ? accent : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    _customText.isNotEmpty ? _customText : '\u2728',
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Pilih dari stiker:',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final s in SettingsScreen._stickers)
+                _stickerItem(s, accent),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              TextButton.icon(
+                icon: const Text('\u{1F6AB}', style: TextStyle(fontSize: 18)),
+                label: const Text(S.settingsStikerNone),
+                onPressed: () {
+                  setState(() {
+                    _selected = '';
+                    _customText = '';
+                    _controller.clear();
+                  });
+                },
+              ),
+              const Spacer(),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(
+                    context,
+                    _StickerPickerResult(_selected, _customText),
+                  );
+                },
+                child: const Text('Simpan'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _stickerItem(_StickerItem s, Color accent) {
+    final isSelected = _selected == s.name;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selected = s.name;
+          _customText = '';
+          _controller.clear();
+        });
+      },
+      child: Container(
+        width: 64,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? accent.withOpacity(0.12)
+              : Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? accent : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Column(
+          children: [
+            Text(s.emoji, style: const TextStyle(fontSize: 22)),
+            const SizedBox(height: 4),
+            Text(
+              s.label,
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? accent : null,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ExportTile extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -360,6 +686,7 @@ class _AccentColorTile extends ConsumerWidget {
         );
         if (result != null) {
           ref.read(accentColorProvider.notifier).setColor(result);
+          WidgetBridge.updateWidget();
         }
       },
     );

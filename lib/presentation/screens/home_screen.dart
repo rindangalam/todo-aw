@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
@@ -16,6 +17,7 @@ import '../../providers/tag_provider.dart';
 import '../widgets/error_state.dart';
 import '../../providers/task_list_provider.dart';
 import '../../services/tour_service.dart';
+import '../../services/widget_action.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/home_hero.dart';
@@ -42,6 +44,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _initCoachmark());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _handleWidgetAction());
+  }
+
+  void _handleWidgetAction() {
+    final action = PendingWidgetAction.action;
+    if (action == null) return;
+    PendingWidgetAction.action = null;
+    if (!mounted) return;
+    switch (action) {
+      case 'edit_task':
+        final uuid = PendingWidgetAction.taskUuid;
+        PendingWidgetAction.taskUuid = null;
+        if (uuid != null) showTaskFormSheet(context, taskId: uuid);
+        break;
+      case 'new_task':
+        showTaskFormSheet(context);
+        break;
+      case 'open_stats':
+        context.go('/dashboard');
+        break;
+      case 'open_calendar':
+        context.go('/calendar');
+        break;
+    }
   }
 
   @override

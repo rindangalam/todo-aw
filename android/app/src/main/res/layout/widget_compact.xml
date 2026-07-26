@@ -53,6 +53,30 @@
                     android:textSize="11sp"
                     android:textStyle="bold"
                     android:visibility="gone" />
+
+                <ImageView
+                    android:id="@+id/iv_time_sticker"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_marginStart="4dp"
+                    android:src="@drawable/ic_sticker_sparkle"
+                    android:visibility="gone" />
+
+                <ImageView
+                    android:id="@+id/iv_manual_sticker"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_marginStart="3dp"
+                    android:src="@drawable/ic_sticker_sparkle"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/widget_sticker_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="3dp"
+                    android:textSize="18sp"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <ProgressBar

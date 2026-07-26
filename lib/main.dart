@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
 
 import 'data/database.dart';
 import 'core/design/dark_theme.dart';
@@ -17,6 +18,7 @@ import 'providers/theme_provider.dart';
 import 'domain/services/notification_service.dart';
 import 'services/tour_service.dart';
 import 'services/widget_bridge.dart';
+import 'services/widget_action.dart';
 import 'data/repositories/task_repository.dart';
 
 void main() async {
@@ -41,6 +43,19 @@ void main() async {
       child: TodoawApp(router: router),
     ),
   );
+
+  if (Platform.isAndroid) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        const channel = MethodChannel('com.todoaw.todoaw/widget_action');
+        final action = await channel.invokeMethod('getPendingAction');
+        if (action != null && action is Map) {
+          PendingWidgetAction.action = action['action'] as String?;
+          PendingWidgetAction.taskUuid = action['taskUuid'] as String?;
+        }
+      } catch (_) {}
+    });
+  }
 }
 
 class TodoawApp extends ConsumerWidget {

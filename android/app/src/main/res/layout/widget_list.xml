@@ -11,6 +11,14 @@
         android:src="@drawable/widget_bg_overlay"
         android:scaleType="fitXY" />
 
+    <ImageView
+        android:id="@+id/iv_confetti_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/ic_sticker_confetti_bg"
+        android:scaleType="fitXY"
+        android:visibility="gone" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -76,6 +84,38 @@
                     android:textSize="9sp"
                     android:textStyle="bold" />
             </LinearLayout>
+
+            <ImageView
+                android:id="@+id/iv_fire_big"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="4dp"
+                android:src="@drawable/ic_sticker_fire_big"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/iv_time_sticker"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_marginStart="4dp"
+                android:src="@drawable/ic_sticker_sparkle"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/iv_manual_sticker"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_marginStart="3dp"
+                android:src="@drawable/ic_sticker_sparkle"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/widget_sticker_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="3dp"
+                android:textSize="22sp"
+                android:visibility="gone" />
         </LinearLayout>
 
         <!-- Progress bar -->
@@ -166,7 +206,7 @@
             android:layout_marginTop="3dp"
             android:background="#33FFFFFF" />
 
-        <!-- Footer: remaining tasks -->
+        <!-- Footer: remaining tasks + add button -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -183,11 +223,19 @@
 
             <TextView
                 android:id="@+id/widget_remaining_text"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:layout_marginStart="4dp"
                 android:textSize="8sp"
                 android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/btn_add_task"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_sticker_plus"
+                android:padding="1dp" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>
