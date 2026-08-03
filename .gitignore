@@ -36,6 +36,7 @@ migrate_working_dir/
 # Project docs & agent config
 /AGENTS.md
 /docs/
+/.opencode/
 
 # Android build artifacts
 /android/build/
