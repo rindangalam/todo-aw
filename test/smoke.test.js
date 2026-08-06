@@ -109,10 +109,10 @@ test('addNote/deleteNote: catatan tambah & hapus', () => {
 
 test('addHabit/deleteHabit: kebiasaan tambah & hapus', () => {
   let s2 = addHabit(s, 'Minum air 8 gelas');
-  assert.strictEqual(s2.habits.length, 1);
-  const id = s2.habits[0].id;
+  assert.strictEqual(s2.habits.length, 3); // 2 dari seed contoh + 1 baru
+  const id = s2.habits.find((h) => h.name === 'Minum air 8 gelas' && !h.example).id;
   s2 = deleteHabit(s2, id);
-  assert.strictEqual(s2.habits.length, 0);
+  assert.strictEqual(s2.habits.length, 2); // seed contoh tetap ada
 });
 
 /* ---------- grouping & filter ---------- */

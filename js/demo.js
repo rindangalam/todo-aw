@@ -132,10 +132,15 @@ function makeSeedState(now) {
     { id: uid(), title: 'Belajar Flutter', body: 'Riverpod: provider vs notifier, AsyncValue states', createdAt: twoDaysAgo, color: '#A7F3D0', pinned: false, example: true },
   ];
 
+  const habits = [
+    { id: uid(), name: 'Minum air 8 gelas', color: '#3B82F6', frequency: 'daily', targetCount: 8, example: true },
+    { id: uid(), name: 'Baca 15 menit', color: '#8B5CF6', frequency: 'daily', targetCount: 1, example: true },
+  ];
+
   return {
     tasks,
     notes,
-    habits: [],
+    habits,
     theme: 'system',
     accent: '#0EA5E9',
     sticker: '',
