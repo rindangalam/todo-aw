@@ -1,0 +1,24 @@
+# Sisa project Flutter yang tidak terpakai di branch demo
+/android/
+/ios/
+/linux/
+/macos/
+/windows/
+/lib/
+/build/
+/docs/
+.dart_tool/
+.idea/
+.opencode/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+
+# File proyek & editor
+*.iml
+*.log
+.DS_Store
+.vscode/
+/AGENTS.md
