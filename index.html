@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Demo interaktif statis dari aplikasi todoaw — kelola tugas, kebiasaan, dan catatan.">
+  <title>todoaw — Demo Interaktif</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✅</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="page-shell">
+
+    <!-- ============ PHONE FRAME ============ -->
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="statusbar">
+        <span class="sb-time">9:41</span>
+        <span class="sb-icons">
+          <svg width="15" height="11" viewBox="0 0 15 11" aria-hidden="true">
+            <rect x="0"  y="7" width="2.6" height="4" rx="0.8" fill="currentColor"/>
+            <rect x="3.6" y="5" width="2.6" height="6" rx="0.8" fill="currentColor"/>
+            <rect x="7.2" y="3" width="2.6" height="8" rx="0.8" fill="currentColor"/>
+            <rect x="10.8" y="1" width="2.6" height="10" rx="0.8" fill="currentColor" opacity="0.35"/>
+            <path d="M0.6 2.2C4.4 -0.6 10.6 -0.6 14.4 2.2l-1.1 1.3c-3 -2.2-8.2-2.2-11.2 0L0.6 2.2z" fill="currentColor"/>
+            <path d="M3.3 4.9c2.3-1.7 6.1-1.7 8.4 0l-1.1 1.3c-1.7-1.3-4.5-1.3-6.2 0L3.3 4.9z" fill="currentColor"/>
+            <rect x="6.1" y="7.7" width="2.8" height="2.6" rx="1" fill="currentColor"/>
+          </svg>
+        </span>
+      </div>
+
+      <!-- splash -->
+      <div class="splash" id="splash">
+        <div class="splash-logo">✅</div>
+        <div class="splash-name">todoaw</div>
+        <div class="splash-tagline">Jadi lebih teratur</div>
+      </div>
+
+      <!-- app -->
+      <div class="app" id="app" data-theme="light">
+
+        <!-- ======== BERANDA ======== -->
+        <div class="screen screen-home" id="screen-home">
+          <header class="appbar">
+            <h1 class="appbar-title">Beranda</h1>
+            <div class="appbar-actions">
+              <button class="icon-btn" id="btn-search" title="Cari tugas">
+                <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+              </button>
+              <button class="icon-btn" id="btn-filter" title="Filter">
+                <svg viewBox="0 0 24 24"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="content">
+            <!-- hero -->
+            <div class="hero">
+              <div class="hero-top">
+                <span class="hero-tagline">Jadi lebih teratur</span>
+                <span class="streak-pill" id="hero-streak" hidden>
+                  <svg class="fire" viewBox="0 0 24 24"><path d="M12 2s4.5 4 4.5 8.5c0 1.4-.4 2.7-1.1 3.8L12 22l-3.4-7.7c-.7-1.1-1.1-2.4-1.1-3.8C7.5 6 12 2 12 2zm0 5a3.5 3.5 0 0 0-3.5 3.5c0 .5.1 1 .3 1.4L12 17.5l3.2-5.6c.2-.4.3-.9.3-1.4A3.5 3.5 0 0 0 12 7z"/></svg>
+                  <span id="hero-streak-text">3 hari streak</span>
+                </span>
+              </div>
+
+              <div class="hero-progress">
+                <div class="ring-wrap">
+                  <svg class="ring" viewBox="0 0 72 72">
+                    <circle class="ring-bg" cx="36" cy="36" r="30"></circle>
+                    <circle class="ring-fg" id="hero-ring" cx="36" cy="36" r="30"></circle>
+                  </svg>
+                  <div class="ring-label">
+                    <span class="ring-pct" id="hero-pct">0%</span>
+                  </div>
+                </div>
+                <div class="hero-info">
+                  <div class="hero-title">Tugas Hari Ini</div>
+                  <div class="hero-badges">
+                    <span class="badge badge-done">
+                      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15l-5-5 1.4-1.4L10 14.2l7.6-7.6L19 8l-9 9z"/></svg>
+                      <b id="hero-completed">0</b> selesai
+                    </span>
+                    <span class="badge badge-left">
+                      <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></svg>
+                      <b id="hero-remaining">0</b> tersisa
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="quick-actions">
+                <button class="qa" id="qa-task" data-accent="primary">
+                  <span class="qa-ico">☑</span>
+                  <span class="qa-label">Tambah Tugas</span>
+                </button>
+                <button class="qa" id="qa-template">
+                  <span class="qa-ico qa-purple">🔖</span>
+                  <span class="qa-label">Dari Template</span>
+                </button>
+                <button class="qa" id="qa-note" data-accent="secondary">
+                  <span class="qa-ico qa-sky">💡</span>
+                  <span class="qa-label">Tambah Catatan</span>
+                </button>
+                <button class="qa" id="qa-focus" data-accent="success">
+                  <span class="qa-ico qa-green">⏱️</span>
+                  <span class="qa-label">Mulai Fokus</span>
+                </button>
+                <button class="qa" id="qa-habit" data-accent="warning">
+                  <span class="qa-ico qa-amber">🔁</span>
+                  <span class="qa-label">Tambah Kebiasaan</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- task list -->
+            <div class="section-head">
+              <span>Daftar Tugas</span>
+            </div>
+
+            <div class="task-list" id="task-list"></div>
+
+            <div class="empty-state" id="empty-state" hidden>
+              <div class="empty-emoji">😌</div>
+              <div class="empty-title" id="empty-title">Hari ini santai?</div>
+              <div class="empty-sub" id="empty-sub">Yuk, bikin tugas pertama</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======== KALENDER ======== -->
+        <div class="screen" id="screen-calendar" hidden>
+          <header class="appbar">
+            <h1 class="appbar-title">Kalender</h1>
+            <div class="appbar-actions">
+              <button class="icon-btn" id="btn-cal-today">Hari Ini</button>
+            </div>
+          </header>
+          <div class="content">
+            <div class="calendar-card">
+              <div class="cal-head">
+                <button class="icon-btn" id="cal-prev" title="Bulan sebelumnya">‹</button>
+                <div class="cal-month" id="cal-month-label">Agustus 2026</div>
+                <button class="icon-btn" id="cal-next" title="Bulan berikutnya">›</button>
+              </div>
+              <div class="cal-weekdays">
+                <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span>
+              </div>
+              <div class="cal-grid" id="cal-grid"></div>
+            </div>
+            <div class="section-head">
+              <span id="cal-day-title">Tugas Hari Ini</span>
+            </div>
+            <div class="task-list" id="cal-day-tasks"></div>
+            <div class="empty-state" id="cal-empty" hidden>
+              <div class="empty-emoji">📭</div>
+              <div class="empty-title">Tidak ada tugas</div>
+              <div class="empty-sub">Tidak ada tugas pada tanggal ini</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======== DASHBOARD ======== -->
+        <div class="screen" id="screen-dashboard" hidden>
+          <header class="appbar">
+            <h1 class="appbar-title">Dashboard</h1>
+          </header>
+          <div class="content">
+            <div class="card">
+              <div class="dash-progress">
+                <div class="ring-wrap ring-72">
+                  <svg class="ring" viewBox="0 0 72 72">
+                    <circle class="ring-bg" cx="36" cy="36" r="30"></circle>
+                    <circle class="ring-fg" id="dash-ring" cx="36" cy="36" r="30"></circle>
+                  </svg>
+                  <div class="ring-label">
+                    <span class="ring-pct" id="dash-pct">0%</span>
+                  </div>
+                </div>
+                <div class="dash-info">
+                  <div class="dash-title">Progress Hari Ini</div>
+                  <div class="dash-sub" id="dash-count">0/0 tugas hari ini</div>
+                  <div class="dash-bar">
+                    <div class="dash-bar-fill" id="dash-bar"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section-head"><span>Produktivitas</span></div>
+            <div class="card card-chart">
+              <div class="chart-label">Target Mingguan</div>
+              <div class="week-chart" id="week-chart"></div>
+            </div>
+
+            <div class="section-head"><span>Statistik</span></div>
+            <div class="stats-row">
+              <div class="stat-card">
+                <div class="stat-ico stat-amber">
+                  <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 6h-6v2h6v2h-6v2h6v2H9V7h8v2z"/></svg>
+                </div>
+                <div class="stat-val" id="stat-active">0</div>
+                <div class="stat-label">Total Aktif</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-ico stat-green">
+                  <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-2 15l-5-5 1.4-1.4L10 14.2l7.6-7.6L19 8l-9 9z"/></svg>
+                </div>
+                <div class="stat-val" id="stat-done">0</div>
+                <div class="stat-label">Total Selesai</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-ico stat-blue">
+                  <svg viewBox="0 0 24 24"><path d="M20 8l-8-5-8 5v8l8 5 8-5V8zm-8-2.6L18.1 8 12 10.6 5.9 8 12 5.4zM6 9.6l6 3.7 6-3.7V16l-6 3.7-6-3.7V9.6z"/></svg>
+                </div>
+                <div class="stat-val" id="stat-total">0</div>
+                <div class="stat-label">Total</div>
+              </div>
+            </div>
+
+            <div class="section-head"><span>&nbsp;</span></div>
+            <div class="card streak-card">
+              <div class="streak-ico">🔥</div>
+              <div>
+                <div class="streak-title" id="streak-title">0 hari streak</div>
+                <div class="streak-sub" id="streak-sub">Mulai streak-mu hari ini!</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======== CATATAN ======== -->
+        <div class="screen" id="screen-notes" hidden>
+          <header class="appbar">
+            <h1 class="appbar-title">Catatan</h1>
+          </header>
+          <div class="content">
+            <div class="notes-list" id="notes-list"></div>
+            <div class="empty-state" id="notes-empty" hidden>
+              <div class="empty-emoji">📝</div>
+              <div class="empty-title">Belum ada catatan</div>
+              <div class="empty-sub">Catat ide singkat sebelum lupa</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======== PENGATURAN ======== -->
+        <div class="screen" id="screen-settings" hidden>
+          <header class="appbar">
+            <h1 class="appbar-title">Pengaturan</h1>
+          </header>
+          <div class="content">
+            <div class="set-group">
+              <div class="set-label">TAMPILAN</div>
+              <div class="card list-card">
+                <label class="set-row">
+                  <span class="set-row-left">
+                    <span class="set-ico">🌙</span>
+                    <span class="set-name">Mode Gelap</span>
+                  </span>
+                  <span class="switch">
+                    <input type="checkbox" id="theme-switch">
+                    <span class="switch-track"></span>
+                  </span>
+                </label>
+                <div class="set-row set-col">
+                  <span class="set-name">Warna Aksen</span>
+                  <div class="accent-row" id="accent-row"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="set-group">
+              <div class="set-label">STIKER WIDGET</div>
+              <div class="card list-card">
+                <div class="set-row set-col">
+                  <span class="set-name">Stiker ikon</span>
+                  <div class="sticker-row" id="sticker-row"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="set-group">
+              <div class="set-label">DATA</div>
+              <div class="card list-card">
+                <button class="set-row" data-toast="Backup data hanya ada di app asli">
+                  <span class="set-ico">📤</span><span class="set-name">Backup Data</span>
+                </button>
+                <button class="set-row" data-toast="Pulihkan data hanya ada di app asli">
+                  <span class="set-ico">📥</span><span class="set-name">Pulihkan Data</span>
+                </button>
+                <button class="set-row" data-toast="Export JSON hanya ada di app asli">
+                  <span class="set-ico">🧾</span><span class="set-name">Export JSON</span>
+                </button>
+                <button class="set-row" data-toast="Export Excel hanya ada di app asli">
+                  <span class="set-ico">📊</span><span class="set-name">Export Excel</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="set-group">
+              <div class="set-label">LAINNYA</div>
+              <div class="card list-card">
+                <button class="set-row" data-toast="Kategori hanya ada di app asli">
+                  <span class="set-ico">🗂️</span><span class="set-name">Kategori</span>
+                </button>
+                <button class="set-row" data-toast="Tag hanya ada di app asli">
+                  <span class="set-ico">🏷️</span><span class="set-name">Tag</span>
+                </button>
+                <button class="set-row" id="btn-reset-demo">
+                  <span class="set-ico">♻️</span><span class="set-name">Reset Demo</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="set-group">
+              <div class="set-label">TENTANG</div>
+              <div class="card list-card">
+                <div class="set-row">
+                  <span class="set-ico">📱</span><span class="set-name">Versi</span>
+                  <span class="set-value">1.0.0+1 (demo)</span>
+                </div>
+                <div class="set-row">
+                  <span class="set-ico">📄</span><span class="set-name">Lisensi</span>
+                  <span class="set-value">MIT</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- bottom nav -->
+        <nav class="bottomnav">
+          <button class="nav-item" data-tab="home">
+            <svg class="nav-ico nav-fill" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            <svg class="nav-ico nav-outline" viewBox="0 0 24 24"><path d="M12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81l5-4.5M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/></svg>
+            <span>Beranda</span>
+          </button>
+          <button class="nav-item" data-tab="calendar">
+            <svg class="nav-ico nav-fill" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 16H5V10h14v10z"/></svg>
+            <svg class="nav-ico nav-outline" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z"/></svg>
+            <span>Kalender</span>
+          </button>
+          <button class="nav-item" data-tab="dashboard">
+            <svg class="nav-ico nav-fill" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+            <svg class="nav-ico nav-outline" viewBox="0 0 24 24"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 5H7v7h3V8zm2 0h3v10h-3V8z"/></svg>
+            <span>Dashboard</span>
+          </button>
+          <button class="nav-item" data-tab="notes">
+            <svg class="nav-ico nav-fill" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            <svg class="nav-ico nav-outline" viewBox="0 0 24 24"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM7 9h10V7H7v2zm0 4h10v-2H7v2zm0 4h7v-2H7v2z"/></svg>
+            <span>Catatan</span>
+          </button>
+          <button class="nav-item" data-tab="settings">
+            <svg class="nav-ico nav-fill" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            <svg class="nav-ico nav-outline" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            <span>Pengaturan</span>
+          </button>
+        </nav>
+
+        <!-- FAB -->
+        <button class="fab" id="fab" title="Tambah tugas">+</button>
+      </div>
+    </div>
+
+    <!-- ============ INFO PANEL (desktop) ============ -->
+    <aside class="info-panel">
+      <div class="panel-logo">✅ <span>todoaw</span></div>
+      <h1>Demo Interaktif</h1>
+      <p>Ini <b>demo statis</b> dari aplikasi <b>todoaw</b> (Flutter). Semua screen, warna, dan fitur inti ditiru dari app asli — berjalan penuh di browser tanpa backend.</p>
+      <ul class="panel-list">
+        <li>✔ Tambah, centang, dan hapus tugas</li>
+        <li>✔ Kalender + statistik ter-update otomatis</li>
+        <li>✔ Mode gelap & warna aksen</li>
+        <li>✔ Data tersimpan di browser (localStorage)</li>
+      </ul>
+      <div class="panel-actions">
+        <button class="panel-btn" id="btn-reset-panel">Reset Data Demo</button>
+      </div>
+      <div class="panel-note">
+        <b>Tips:</b> coba centang tugas di Beranda, lalu lihat Dashboard berubah.
+        <br><br>
+        Aplikasi asli: <code>flutter run</code> — repo <code>main</code>.
+      </div>
+    </aside>
+  </div>
+
+  <!-- ============ BOTTOM SHEETS ============ -->
+  <div class="sheet-backdrop" id="sheet-backdrop" hidden>
+    <div class="sheet" id="sheet-task">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title" id="sheet-task-title">Tambah Tugas</div>
+      <div class="sheet-body">
+        <label class="field">
+          <span class="field-label">Judul</span>
+          <input type="text" id="tf-title" placeholder="Apa yang perlu dilakukan?">
+        </label>
+        <label class="field">
+          <span class="field-label">Deskripsi (opsional)</span>
+          <input type="text" id="tf-desc" placeholder="Tambahkan detail...">
+        </label>
+        <div class="field">
+          <span class="field-label">Prioritas</span>
+          <div class="chip-row" id="tf-priority">
+            <button class="chip chip-p1" data-priority="p1">P1</button>
+            <button class="chip chip-p2" data-priority="p2">P2</button>
+            <button class="chip chip-p3" data-priority="p3">P3</button>
+            <button class="chip chip-p4" data-priority="p4">P4</button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-label">Deadline</span>
+          <input type="date" id="tf-date">
+        </div>
+        <div class="field">
+          <span class="field-label">Kategori</span>
+          <div class="chip-row" id="tf-category"></div>
+        </div>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn danger" id="tf-delete" hidden>Hapus</button>
+        <button class="btn primary" id="tf-save">Simpan</button>
+      </div>
+    </div>
+
+    <div class="sheet" id="sheet-template">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">Pilih Template</div>
+      <div class="sheet-body" id="template-list"></div>
+    </div>
+
+    <div class="sheet" id="sheet-note">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title" id="sheet-note-title">Tambah Catatan</div>
+      <div class="sheet-body">
+        <label class="field">
+          <span class="field-label">Judul</span>
+          <input type="text" id="nf-title" placeholder="Judul catatan...">
+        </label>
+        <label class="field">
+          <span class="field-label">Isi catatan</span>
+          <textarea id="nf-body" rows="4" placeholder="Tulis sesuatu..."></textarea>
+        </label>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn danger" id="nf-delete" hidden>Hapus</button>
+        <button class="btn primary" id="nf-save">Simpan</button>
+      </div>
+    </div>
+
+    <div class="sheet" id="sheet-day">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title" id="day-title">Tugas</div>
+      <div class="sheet-body">
+        <div class="task-list" id="day-tasks"></div>
+        <div class="empty-state" id="day-empty" hidden>
+          <div class="empty-emoji">📭</div>
+          <div class="empty-title">Tidak ada tugas</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet" id="sheet-focus">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">Mulai Fokus</div>
+      <div class="sheet-body focus-body">
+        <div class="focus-ring-wrap">
+          <svg class="ring focus-ring" viewBox="0 0 120 120">
+            <circle class="ring-bg" cx="60" cy="60" r="54"></circle>
+            <circle class="ring-fg focus-ring-fg" id="focus-ring" cx="60" cy="60" r="54"></circle>
+          </svg>
+          <div class="focus-time" id="focus-time">25:00</div>
+        </div>
+        <div class="focus-controls">
+          <button class="btn primary" id="focus-start">Mulai</button>
+          <button class="btn" id="focus-reset">Reset</button>
+        </div>
+        <div class="focus-hint">Timer demo — 25 menit fokus, ala Pomodoro.</div>
+      </div>
+    </div>
+
+    <div class="sheet" id="sheet-habit">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">Tambah Kebiasaan</div>
+      <div class="sheet-body">
+        <label class="field">
+          <span class="field-label">Nama kebiasaan</span>
+          <input type="text" id="habit-input" placeholder="cth: Minum air 8 gelas">
+        </label>
+        <div class="sheet-actions">
+          <button class="btn primary" id="habit-add">Tambah</button>
+        </div>
+        <div class="set-label" style="margin-top:16px">KEBIASAANMU</div>
+        <div class="habit-list" id="habit-list"></div>
+        <div class="empty-state" id="habit-empty" hidden>
+          <div class="empty-emoji">🔁</div>
+          <div class="empty-title">Belum ada kebiasaan</div>
+          <div class="empty-sub">Tambahkan kebiasaan yang mau dibangun</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- toast -->
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="js/demo.js"></script>
+</body>
+</html>
