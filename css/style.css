@@ -1060,7 +1060,7 @@ button.set-row:hover { background: var(--field-bg); }
 
 /* ---------- sheets ---------- */
 .sheet-backdrop {
-  position: fixed;
+  position: absolute;
   inset: 0;
   display: flex;
   align-items: flex-end;
@@ -1086,7 +1086,7 @@ button.set-row:hover { background: var(--field-bg); }
   color: var(--text);
   border-radius: 22px 22px 0 0;
   padding: 10px 20px 24px;
-  max-height: 80dvh;
+  max-height: 80%;
   transform: translateY(110%);
   transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
   display: flex;
@@ -1097,8 +1097,8 @@ button.set-row:hover { background: var(--field-bg); }
 
 .sheet-backdrop.open .sheet { transform: translateY(0); }
 
-.sheet-task { height: 92dvh; max-height: 92dvh; }
-.sheet-note { height: 100dvh; max-height: 100dvh; border-radius: 0; }
+.sheet-task { height: 92%; max-height: 92%; }
+.sheet-note { height: 100%; max-height: 100%; border-radius: 0; }
 
 .sheet-handle {
   width: 34px;
@@ -1638,8 +1638,8 @@ select.select-box.native { background-image: none; }
 
 /* ---------- toast ---------- */
 .toast {
-  position: fixed;
-  bottom: 28px;
+  position: absolute;
+  bottom: 88px;
   left: 50%;
   transform: translateX(-50%);
   background: #101828;
@@ -1652,8 +1652,9 @@ select.select-box.native { background-image: none; }
   opacity: 0;
   transition: opacity 0.25s ease;
   pointer-events: none;
-  max-width: 90vw;
+  max-width: 90%;
   text-align: center;
+  width: max-content;
 }
 
 .toast.show { opacity: 1; }
