@@ -29,6 +29,21 @@ function uid() {
   return 'id' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 }
 
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 const MONTHS = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
@@ -48,11 +63,21 @@ const PRIORITY = {
   p4: { label: 'P4', color: '#9CA3AF' },
 };
 
+const PRIORITY_NAMES = { p1: 'Urgent', p2: 'Tinggi', p3: 'Sedang', p4: 'Rendah' };
+
 const CATEGORIES = [
   { id: 'none', name: 'Tanpa Kategori', color: null },
   { id: 'kerja', name: 'Pekerjaan', color: '#3B82F6' },
   { id: 'rumah', name: 'Rumah', color: '#F59E0B' },
   { id: 'belajar', name: 'Belajar', color: '#8B5CF6' },
+];
+
+const LABELS = [
+  { name: 'Pribadi', color: '#F59E0B' },
+  { name: 'Pekerjaan', color: '#3B82F6' },
+  { name: 'Penting', color: '#EF4444' },
+  { name: 'Kesehatan', color: '#10B981' },
+  { name: 'Belajar', color: '#8B5CF6' },
 ];
 
 const TEMPLATES = [
@@ -62,6 +87,21 @@ const TEMPLATES = [
   { title: 'Sprint Backlog', desc: 'Rinci task untuk sprint berikutnya' },
 ];
 
+const NOTE_COLORS = ['#FDE68A', '#A7F3D0', '#BFDBFE', '#C7D2FE', '#FECACA', '#E2E8F0'];
+const ACCENTS = ['#0EA5E9', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899'];
+const STICKERS = [
+  { e: '✨', n: 'Sparkle' }, { e: '☀️', n: 'Sun' }, { e: '🌙', n: 'Moon' },
+  { e: '🌸', n: 'Flower' }, { e: '⭐', n: 'Star' }, { e: '❤️', n: 'Heart' },
+  { e: '😊', n: 'Smile' }, { e: '⚡', n: 'Lightning' }, { e: '🎵', n: 'Music' },
+  { e: '🎉', n: 'Party' },
+];
+const RECURRENCE = {
+  '': 'Tidak berulang',
+  daily: 'Setiap hari',
+  weekly: 'Setiap minggu',
+  monthly: 'Setiap bulan',
+};
+
 function makeSeedState(now) {
   const today = dateKey(now);
   const tomorrow = addDays(today, 1);
@@ -70,31 +110,36 @@ function makeSeedState(now) {
   const twoDaysAgo = addDays(today, -2);
 
   const tasks = [
-    { id: uid(), title: 'Beli bahan masakan', desc: 'Sayur, telur, dan bumbu dapur', priority: 'p1', categoryId: 'rumah', dueDate: tomorrow, isCompleted: false, tags: ['#F59E0B'] },
-    { id: uid(), title: 'Selesaikan laporan proyek', desc: 'Bab 3-5, lengkapi grafik dan kesimpulan', priority: 'p4', categoryId: 'kerja', dueDate: today, isCompleted: false, tags: ['#EF4444'] },
-    { id: uid(), title: 'Design mockup halaman login', desc: 'Buat 3 varian di Figma', priority: 'p3', categoryId: 'kerja', dueDate: dayAfter, isCompleted: false, tags: ['#8B5CF6'] },
-    { id: uid(), title: 'Refactor API endpoint', desc: 'Pisahkan controller dan service layer', priority: 'p4', categoryId: 'kerja', dueDate: null, isCompleted: false, tags: ['#10B981'] },
-    { id: uid(), title: 'Olahraga sore', desc: 'Jogging 30 menit di taman', priority: 'p1', categoryId: 'none', dueDate: today, isCompleted: true, tags: [] },
-    { id: uid(), title: 'Baca artikel Flutter Riverpod', desc: 'https://docs-v2.riverpod.dev', priority: 'p1', categoryId: 'belajar', dueDate: null, isCompleted: false, tags: ['#EF4444'] },
-    { id: uid(), title: 'Ganti password wifi', desc: 'Buat password baru dan update di semua device', priority: 'p2', categoryId: 'rumah', dueDate: tomorrow, isCompleted: false, tags: ['#F59E0B'] },
-    { id: uid(), title: 'Meeting tim', desc: '20 menit, bahas sprint review', priority: 'p2', categoryId: 'kerja', dueDate: today, isCompleted: false, tags: [] },
-    { id: uid(), title: 'Jogging pagi', desc: '5 km di sekitar kompleks', priority: 'p3', categoryId: 'none', dueDate: yesterday, isCompleted: true, tags: [] },
-    { id: uid(), title: 'Baca 10 halaman buku', desc: 'Lanjut bab 4', priority: 'p4', categoryId: 'belajar', dueDate: twoDaysAgo, isCompleted: true, tags: [] },
+    { id: uid(), title: 'Beli bahan masakan', desc: 'Sayur, telur, dan bumbu dapur', priority: 'p1', categoryId: 'rumah', dueDate: tomorrow, isCompleted: false, tags: ['#F59E0B'], recurrence: '', reminder: 30, estimated: null, subtasks: [], archived: false, example: true },
+    { id: uid(), title: 'Selesaikan laporan proyek', desc: 'Bab 3-5, lengkapi grafik dan kesimpulan', priority: 'p4', categoryId: 'kerja', dueDate: today, isCompleted: false, tags: ['#EF4444'], recurrence: '', reminder: 60, estimated: 120, subtasks: [
+      { id: uid(), title: 'Tulis bab 3 & 4', done: true },
+      { id: uid(), title: 'Buat grafik', done: false },
+      { id: uid(), title: 'Review kesimpulan', done: false },
+    ], archived: false, example: true },
+    { id: uid(), title: 'Design mockup halaman login', desc: 'Buat 3 varian di Figma', priority: 'p3', categoryId: 'kerja', dueDate: dayAfter, isCompleted: false, tags: ['#8B5CF6'], recurrence: '', reminder: 30, estimated: 60, subtasks: [], archived: false, example: true },
+    { id: uid(), title: 'Refactor API endpoint', desc: 'Pisahkan controller dan service layer', priority: 'p4', categoryId: 'kerja', dueDate: null, isCompleted: false, tags: ['#10B981'], recurrence: '', reminder: 30, estimated: null, subtasks: [], archived: false, example: true },
+    { id: uid(), title: 'Olahraga sore', desc: 'Jogging 30 menit di taman', priority: 'p1', categoryId: 'none', dueDate: today, isCompleted: true, tags: [], recurrence: 'daily', reminder: 30, estimated: 30, subtasks: [], archived: false, example: true },
+    { id: uid(), title: 'Baca artikel Flutter Riverpod', desc: 'https://docs-v2.riverpod.dev', priority: 'p1', categoryId: 'belajar', dueDate: null, isCompleted: false, tags: ['#EF4444'], recurrence: '', reminder: 30, estimated: null, subtasks: [], archived: false, example: true },
+    { id: uid(), title: 'Ganti password wifi', desc: 'Buat password baru dan update di semua device', priority: 'p2', categoryId: 'rumah', dueDate: tomorrow, isCompleted: false, tags: ['#F59E0B'], recurrence: '', reminder: 30, estimated: 15, subtasks: [], archived: false, example: true },
+    { id: uid(), title: 'Meeting tim', desc: '20 menit, bahas sprint review', priority: 'p2', categoryId: 'kerja', dueDate: today, isCompleted: false, tags: [], recurrence: 'weekly', reminder: 15, estimated: 20, subtasks: [], archived: false, example: true },
+    { id: uid(), title: 'Jogging pagi', desc: '5 km di sekitar kompleks', priority: 'p3', categoryId: 'none', dueDate: yesterday, isCompleted: true, tags: [], recurrence: 'daily', reminder: 30, estimated: 30, subtasks: [], archived: false, example: true },
+    { id: uid(), title: 'Baca 10 halaman buku', desc: 'Lanjut bab 4', priority: 'p4', categoryId: 'belajar', dueDate: twoDaysAgo, isCompleted: true, tags: [], recurrence: '', reminder: 30, estimated: null, subtasks: [], archived: false, example: true },
   ];
 
   const notes = [
-    { id: uid(), title: 'Ide aplikasi', body: 'Integrasi widget home screen untuk quick add task', createdAt: today },
-    { id: uid(), title: 'Grocery list', body: 'Telur, susu, kopi, sayur, dan sabun cuci piring', createdAt: yesterday },
-    { id: uid(), title: 'Belajar Flutter', body: 'Riverpod: provider vs notifier, AsyncValue states', createdAt: twoDaysAgo },
+    { id: uid(), title: 'Ide aplikasi', body: 'Integrasi widget home screen untuk quick add task', createdAt: today, color: '#FDE68A', pinned: true, example: true },
+    { id: uid(), title: 'Grocery list', body: 'Telur, susu, kopi, sayur, dan sabun cuci piring', createdAt: yesterday, color: '#BFDBFE', pinned: false, example: true },
+    { id: uid(), title: 'Belajar Flutter', body: 'Riverpod: provider vs notifier, AsyncValue states', createdAt: twoDaysAgo, color: '#A7F3D0', pinned: false, example: true },
   ];
 
   return {
     tasks,
     notes,
     habits: [],
-    theme: 'light',
+    theme: 'system',
     accent: '#0EA5E9',
-    sticker: 'Tanpa',
+    sticker: '',
+    filter: { status: 'all', priority: 'all', category: 'all', tags: [] },
   };
 }
 
@@ -195,31 +240,69 @@ function formatDateLabel(key, todayKey) {
   return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
 }
 
+function longDate(key) {
+  const d = parseKey(key);
+  return `${DAY_LONG[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 function categoryOf(task) {
   return CATEGORIES.find((c) => c.id === task.categoryId) || CATEGORIES[0];
 }
 
-function hexToRgba(hex, alpha) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+function labelNamesOf(task) {
+  return (task.tags || [])
+    .map((c) => LABELS.find((l) => l.color === c))
+    .filter(Boolean);
+}
+
+function filterTasks(tasks, f) {
+  return tasks.filter((t) => {
+    if (f.status === 'open' && t.isCompleted) return false;
+    if (f.status === 'done' && !t.isCompleted) return false;
+    if (f.priority !== 'all' && t.priority !== f.priority) return false;
+    if (f.category !== 'all' && t.categoryId !== f.category) return false;
+    if (f.tags && f.tags.length && !f.tags.some((c) => (t.tags || []).includes(c))) return false;
+    return true;
+  });
+}
+
+function groupTasks(tasks, todayKey) {
+  const groups = { overdue: [], today: [], tomorrow: [], later: [] };
+  const tomorrow = addDays(todayKey, 1);
+  tasks.forEach((t) => {
+    if (!t.dueDate || t.dueDate > tomorrow) groups.later.push(t);
+    else if (t.dueDate === todayKey) groups.today.push(t);
+    else if (t.dueDate === tomorrow) groups.tomorrow.push(t);
+    else groups.overdue.push(t);
+  });
+  return groups;
 }
 
 /* ---------------- UI layer (browser) ---------------- */
 
 const LS_KEY = 'todoaw-demo-v1';
-const RING_CIRC = 188.5;
-const FOCUS_CIRC = 339.3;
-const STICKERS = ['Tanpa', '🚀', '💪', '🔥', '😎', '✨'];
+const RING_CIRC = 188.5; // r=30
+const FOCUS_CIRC = 339.3; // r=54
 
 let state = null;
 let currentTab = 'home';
 let selectedDayKey = null;
 let calendarCursor = null;
+let searchQ = '';
+let noteSearchQ = null;
+let editingTaskId = null;
+let editingTags = [];
+let editingCat = 'none';
+let editingRecur = '';
+let editingSubtasks = [];
+let editingNoteId = null;
+let editingNoteColor = null;
+let stickerDraft = '';
 let focusRemaining = 0;
 let focusInterval = null;
 let toastTimer = null;
+let lastWeekCounts = [];
+let swipe = null;
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
@@ -228,7 +311,7 @@ function saveState() {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(state));
   } catch (_) {
-    /* localStorage tidak tersedia (mis. file:// strict) — abaikan */
+    /* localStorage tidak tersedia — abaikan */
   }
 }
 
@@ -240,6 +323,20 @@ function loadState() {
     /* ignore */
   }
   return null;
+}
+
+function migrateState(s) {
+  s.tasks = (s.tasks || []).map((t) => ({
+    recurrence: '', reminder: 30, estimated: null, subtasks: [], archived: false,
+    ...t,
+  }));
+  s.notes = (s.notes || []).map((n) => ({ color: null, pinned: false, ...n }));
+  s.habits = s.habits || [];
+  s.theme = s.theme || 'system';
+  s.accent = s.accent || '#0EA5E9';
+  s.sticker = s.sticker || '';
+  s.filter = s.filter || { status: 'all', priority: 'all', category: 'all', tags: [] };
+  return s;
 }
 
 function toast(msg) {
@@ -256,18 +353,51 @@ function toast(msg) {
 
 /* ---------- theme / accent ---------- */
 
+function resolveTheme() {
+  if (state.theme === 'system') {
+    const dark =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return dark ? 'dark' : 'light';
+  }
+  return state.theme;
+}
+
 function applyTheme() {
   const app = $('#app');
-  app.dataset.theme = state.theme;
-  document.body.classList.toggle('dark', state.theme === 'dark');
-  $('#theme-switch').checked = state.theme === 'dark';
+  app.dataset.theme = resolveTheme();
+  document.body.classList.toggle('dark', resolveTheme() === 'dark');
+  renderSettings();
 }
 
 function applyAccent() {
   const app = $('#app');
   app.style.setProperty('--accent', state.accent);
   app.style.setProperty('--accent-soft', hexToRgba(state.accent, 0.12));
-  renderAccentRow();
+  renderSettings();
+}
+
+function initRingGradient(id, ringEl) {
+  const svg = ringEl.ownerSVGElement;
+  if (!svg || svg.querySelector('defs')) return;
+  const ns = 'http://www.w3.org/2000/svg';
+  const defs = document.createElementNS(ns, 'defs');
+  const g = document.createElementNS(ns, 'linearGradient');
+  g.id = id;
+  g.setAttribute('x1', '0');
+  g.setAttribute('y1', '0');
+  g.setAttribute('x2', '0');
+  g.setAttribute('y2', '1');
+  [['0%', '#EF4444'], ['33%', '#F59E0B'], ['66%', '#0EA5E9'], ['100%', '#10B981']]
+    .forEach(([o, c]) => {
+      const s = document.createElementNS(ns, 'stop');
+      s.setAttribute('offset', o);
+      s.setAttribute('stop-color', c);
+      g.appendChild(s);
+    });
+  defs.appendChild(g);
+  svg.insertBefore(defs, svg.firstChild);
+  ringEl.setAttribute('stroke', `url(#${id})`);
 }
 
 /* ---------- task card HTML ---------- */
@@ -279,7 +409,9 @@ function priorityBadgeHTML(priority) {
 
 function taskCardHTML(task, todayKey) {
   const cat = categoryOf(task);
-  const dotColor = cat.color ? `style="background:${cat.color}"` : `style="background:var(--muted);opacity:.4"`;
+  const dotColor = cat.color
+    ? `style="background:${cat.color}"`
+    : `style="background:var(--muted);opacity:.4"`;
   const tagDots = (task.tags || [])
     .map((c) => `<span style="background:${c}"></span>`)
     .join('');
@@ -287,6 +419,10 @@ function taskCardHTML(task, todayKey) {
   if (task.dueDate) {
     meta.push(`<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 11h-2V8h2v5zm-1 6a6 6 0 1 1 0-12 6 6 0 0 1 0 12z"/></svg>`);
     meta.push(`<span>${formatDateLabel(task.dueDate, todayKey)}</span>`);
+  }
+  if (task.subtasks && task.subtasks.length) {
+    const done = task.subtasks.filter((s) => s.done).length;
+    meta.push(`<span class="tc-sub">${done}/${task.subtasks.length} subtask</span>`);
   }
   return `
     <div class="task-card ${task.isCompleted ? 'done' : ''}" data-id="${task.id}">
@@ -305,12 +441,23 @@ function taskCardHTML(task, todayKey) {
     </div>`;
 }
 
-function escapeHtml(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+function taskCardWrapperHTML(task, todayKey) {
+  return `
+    <div class="tc-swipe">
+      <div class="tc-swipe-red">Hapus</div>
+      ${taskCardHTML(task, todayKey)}
+    </div>`;
+}
+
+function noteCardHTML(n, todayKey) {
+  return `
+    <div class="note-card ${n.pinned ? 'pinned' : ''}" data-id="${n.id}"
+         style="background:${n.color || 'var(--surface)'}">
+      ${n.pinned ? '<span class="note-pin" title="Disematkan">📌</span>' : ''}
+      <div class="note-title">${escapeHtml(n.title)}</div>
+      <div class="note-body">${escapeHtml(n.body)}</div>
+      <div class="note-date">${formatDateLabel(n.createdAt, todayKey)}</div>
+    </div>`;
 }
 
 /* ---------- renderers ---------- */
@@ -320,18 +467,22 @@ function renderAll() {
   renderCalendar();
   renderDashboard();
   renderNotes();
+  renderSettings();
   updateNav();
   updateFab();
 }
 
+function activeTasks() {
+  return state.tasks.filter((t) => !t.archived);
+}
+
 function renderHome() {
   const todayKey = dateKey(new Date());
-  const { total, completed, percent } = computeTodayProgress(state.tasks, todayKey);
-  const stats = computeStats(state.tasks, todayKey);
-  const accent = percent >= 1 && total > 0 ? '#10B981' : state.accent;
+  const active = activeTasks();
+  const { total, completed, percent } = computeTodayProgress(active, todayKey);
+  const stats = computeStats(active, todayKey);
 
   $('#hero-ring').style.strokeDashoffset = RING_CIRC * (1 - percent);
-  $('#hero-ring').style.stroke = accent;
   $('#hero-pct').textContent = `${Math.round(percent * 100)}%`;
   $('#hero-completed').textContent = completed;
   $('#hero-remaining').textContent = total - completed;
@@ -344,18 +495,56 @@ function renderHome() {
     streakPill.hidden = true;
   }
 
-  const list = sortTasks(state.tasks);
-  const listEl = $('#task-list');
-  const emptyEl = $('#empty-state');
-  if (list.length === 0) {
-    listEl.innerHTML = '';
+  const q = searchQ.trim().toLowerCase();
+  let visible = active;
+  if (q) {
+    visible = visible.filter((t) =>
+      t.title.toLowerCase().includes(q) || (t.desc || '').toLowerCase().includes(q)
+    );
+  }
+  visible = filterTasks(visible, state.filter);
+
+  const grouped = groupTasks(visible, todayKey);
+  const sections = [
+    ['Terlambat', grouped.overdue],
+    ['Hari Ini', grouped.today],
+    ['Besok', grouped.tomorrow],
+    ['Nanti', grouped.later],
+  ];
+
+  let html = '';
+  sections.forEach(([name, list]) => {
+    if (!list.length) return;
+    const sorted = sortTasks(list);
+    html += `
+      <div class="task-section">
+        <div class="sec-head">
+          <span>${name}</span>
+          <span class="sec-count">${sorted.length}</span>
+        </div>
+        ${sorted.map((t) => taskCardWrapperHTML(t, todayKey)).join('')}
+      </div>`;
+  });
+  $('#task-sections').innerHTML = html;
+  bindSwipes($('#task-sections'));
+
+  const emptyEl = $('#home-empty');
+  if (visible.length === 0) {
     emptyEl.hidden = false;
-    $('#empty-title').textContent = 'Hari ini santai?';
-    $('#empty-sub').textContent = 'Yuk, bikin tugas pertama';
+    $('#home-empty-action').hidden = active.length > 0;
+    if (active.length === 0) {
+      $('#home-empty-title').textContent = 'Hari ini santai?';
+      $('#home-empty-sub').textContent = 'Yuk, bikin tugas pertama';
+    } else {
+      $('#home-empty-title').textContent = 'Tidak ada tugas yang cocok';
+      $('#home-empty-sub').textContent = 'Coba ubah filter atau kata kunci kamu';
+    }
   } else {
-    listEl.innerHTML = list.map((t) => taskCardHTML(t, todayKey)).join('');
     emptyEl.hidden = true;
   }
+
+  $('#list-title').textContent = q ? 'Hasil Pencarian' : 'Daftar Tugas';
+  renderFilterChips();
 }
 
 function renderCalendar() {
@@ -370,13 +559,12 @@ function renderCalendar() {
   const offset = (first.getDay() + 6) % 7;
   const daysInMonth = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0).getDate();
 
-  const taskKeys = new Set(state.tasks.filter((t) => t.dueDate).map((t) => t.dueDate));
+  const taskKeys = new Set(activeTasks().filter((t) => t.dueDate).map((t) => t.dueDate));
   const cells = [];
 
   const prevDays = new Date(cursor.getFullYear(), cursor.getMonth(), 0).getDate();
   for (let i = offset - 1; i >= 0; i--) {
-    const day = prevDays - i;
-    const d = new Date(cursor.getFullYear(), cursor.getMonth() - 1, day);
+    const d = new Date(cursor.getFullYear(), cursor.getMonth() - 1, prevDays - i);
     cells.push(cellHTML(d, dateKey(d), true, taskKeys, todayKey));
   }
   for (let i = 1; i <= daysInMonth; i++) {
@@ -390,7 +578,7 @@ function renderCalendar() {
   }
 
   $('#cal-grid').innerHTML = cells.join('');
-  renderDayTasks();
+  renderAgenda();
 }
 
 function cellHTML(d, key, other, taskKeys, todayKey) {
@@ -404,45 +592,64 @@ function cellHTML(d, key, other, taskKeys, todayKey) {
   return `<button class="${cls}" data-day="${key}">${d.getDate()}${dot}</button>`;
 }
 
-function renderDayTasks() {
+function renderAgenda() {
   const todayKey = dateKey(new Date());
   const key = selectedDayKey || todayKey;
-  $('#cal-day-title').textContent =
-    key === todayKey ? 'Tugas Hari Ini' : `Tugas — ${formatDateLabel(key, todayKey)}`;
+  const tasks = activeTasks().filter((t) => t.dueDate === key);
 
-  const tasks = state.tasks.filter((t) => t.dueDate === key);
-  const listEl = $('#cal-day-tasks');
-  const emptyEl = $('#cal-empty');
+  $('#agenda-title').textContent = longDate(key);
+  $('#agenda-today').hidden = key !== todayKey;
+
+  const countEl = $('#agenda-count');
+  const listEl = $('#agenda-list');
+  const emptyEl = $('#agenda-empty');
+
   if (tasks.length === 0) {
+    countEl.hidden = true;
     listEl.innerHTML = '';
     emptyEl.hidden = false;
   } else {
-    listEl.innerHTML = sortTasks(tasks).map((t) => taskCardHTML(t, todayKey)).join('');
+    const done = tasks.filter((t) => t.isCompleted).length;
+    countEl.hidden = false;
+    $('#agenda-count-left').textContent = `${done} tugas selesai`;
+    $('#agenda-count-right').textContent = `${done}/${tasks.length}`;
+    listEl.innerHTML = sortTasks(tasks).map((t) => taskCardWrapperHTML(t, todayKey)).join('');
     emptyEl.hidden = true;
   }
+  bindSwipes(listEl);
+}
+
+function renderDaySheet(key) {
+  const todayKey = dateKey(new Date());
+  const tasks = activeTasks().filter((t) => t.dueDate === key);
+  $('#day-title').textContent = longDate(key);
+  $('#day-tasks').innerHTML = tasks.length
+    ? sortTasks(tasks).map((t) => taskCardWrapperHTML(t, todayKey)).join('')
+    : '<div class="sheet-empty">Tidak ada tugas di hari ini</div>';
+  bindSwipes($('#day-tasks'));
+  openSheet('sheet-day');
 }
 
 function renderDashboard() {
   const todayKey = dateKey(new Date());
-  const { total, completed, percent } = computeTodayProgress(state.tasks, todayKey);
-  const stats = computeStats(state.tasks, todayKey);
-  const accent = percent >= 1 && total > 0 ? '#10B981' : state.accent;
+  const active = activeTasks();
+  const { total, completed, percent } = computeTodayProgress(active, todayKey);
+  const stats = computeStats(active, todayKey);
 
   $('#dash-ring').style.strokeDashoffset = RING_CIRC * (1 - percent);
-  $('#dash-ring').style.stroke = accent;
   $('#dash-pct').textContent = `${Math.round(percent * 100)}%`;
   $('#dash-count').textContent = `${completed}/${total} tugas hari ini`;
   const bar = $('#dash-bar');
   bar.style.width = `${Math.round(percent * 100)}%`;
-  bar.style.background = accent;
 
-  const counts = weeklyCounts(state.tasks, mondayKeyOf(todayKey));
+  const counts = weeklyCounts(active, mondayKeyOf(todayKey));
+  lastWeekCounts = counts;
   const max = Math.max(...counts, 1);
   $('#week-chart').innerHTML = counts
     .map((c, i) => {
-      const h = c > 0 ? 18 + Math.round((c / max) * 58) : 6;
+      const h = c > 0 ? 14 + Math.round((c / max) * 78) : 5;
       return `
-        <div class="wc-col">
+        <div class="wc-col" data-i="${i}" title="${DAY_SHORT[(i + 1) % 7]}: ${c} tugas">
           <span class="wc-val">${c > 0 ? c : ''}</span>
           <div class="wc-bar ${c > 0 ? 'fill' : ''}" style="height:${h}px"></div>
           <span class="wc-label">${DAY_SHORT[(i + 1) % 7]}</span>
@@ -464,35 +671,32 @@ function renderDashboard() {
 }
 
 function renderNotes() {
-  const listEl = $('#notes-list');
-  const emptyEl = $('#notes-empty');
-  if (state.notes.length === 0) {
-    listEl.innerHTML = '';
-    emptyEl.hidden = false;
-    return;
+  const todayKey = dateKey(new Date());
+  let list = state.notes;
+  if (noteSearchQ) {
+    const q = noteSearchQ.toLowerCase();
+    list = list.filter(
+      (n) => n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q)
+    );
   }
-  emptyEl.hidden = true;
-  listEl.innerHTML = state.notes
-    .map(
-      (n) => `
-      <div class="note-card" data-id="${n.id}">
-        <div class="note-title">${escapeHtml(n.title)}</div>
-        <div class="note-body">${escapeHtml(n.body)}</div>
-        <div class="note-date">${formatDateLabel(n.createdAt, dateKey(new Date()))}</div>
-      </div>`
-    )
+  const pinned = list.filter((n) => n.pinned);
+  const rest = list
+    .filter((n) => !n.pinned)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  $('#pin-head').hidden = pinned.length === 0;
+  $('#notes-grid').innerHTML = [...pinned, ...rest]
+    .map((n) => noteCardHTML(n, todayKey))
     .join('');
+  $('#notes-empty').hidden = list.length > 0;
 }
 
 function renderHabits() {
   const listEl = $('#habit-list');
-  const emptyEl = $('#habit-empty');
   if (state.habits.length === 0) {
-    listEl.innerHTML = '';
-    emptyEl.hidden = false;
+    listEl.innerHTML = '<div class="sheet-empty">Belum ada kebiasaan</div>';
     return;
   }
-  emptyEl.hidden = true;
   listEl.innerHTML = state.habits
     .map(
       (h) => `
@@ -505,19 +709,56 @@ function renderHabits() {
     .join('');
 }
 
-function renderAccentRow() {
-  const colors = ['#0EA5E9', '#8B5CF6', '#10B981', '#F59E0B'];
-  $('#accent-row').innerHTML = colors
+function renderSettings() {
+  $$('.set-row[data-mode]').forEach((row) => {
+    const check = row.querySelector('.set-check');
+    if (check) check.classList.toggle('on', row.dataset.mode === state.theme);
+  });
+  $('#accent-hex').textContent = state.accent.toUpperCase();
+  $('#accent-swatch').style.background = state.accent;
+  $('#sticker-preview').textContent = state.sticker || '🚫';
+  const preset = STICKERS.find((s) => s.e === state.sticker);
+  $('#sticker-label').textContent = !state.sticker
+    ? 'Tanpa Stiker'
+    : preset
+      ? preset.n
+      : 'Stiker kustom';
+}
+
+function renderFilterChips() {
+  const f = state.filter;
+  const chips = [];
+  if (f.status === 'open') chips.push({ label: 'Belum Selesai', clear: 'status' });
+  if (f.status === 'done') chips.push({ label: 'Selesai', clear: 'status' });
+  if (f.priority !== 'all') chips.push({ label: PRIORITY[f.priority].label, clear: 'priority' });
+  if (f.category !== 'all') {
+    const cat = CATEGORIES.find((c) => c.id === f.category) || CATEGORIES[0];
+    chips.push({ label: cat.name, clear: 'category' });
+  }
+  (f.tags || []).forEach((c) => {
+    const l = LABELS.find((x) => x.color === c);
+    chips.push({ label: l ? l.name : c, color: c, clear: 'tag:' + c });
+  });
+  $('#filter-chips').innerHTML = chips
     .map(
-      (c) =>
-        `<button class="accent-dot ${c === state.accent ? 'sel' : ''}" data-accent="${c}" style="background:${c}"></button>`
+      (c) => `
+      <button class="filter-chip" data-clear="${c.clear}">
+        ${c.color ? `<span class="fdot" style="background:${c.color}"></span>` : ''}
+        ${escapeHtml(c.label)}
+        <span class="fdot-x">✕</span>
+      </button>`
     )
     .join('');
+}
 
-  $('#sticker-row').innerHTML = STICKERS.map(
-    (s) =>
-      `<button class="sticker-chip ${s === state.sticker ? 'sel' : ''}" data-sticker="${s}">${s}</button>`
-  ).join('');
+function clearFilter(key) {
+  const f = state.filter;
+  if (key === 'status') f.status = 'all';
+  else if (key === 'priority') f.priority = 'all';
+  else if (key === 'category') f.category = 'all';
+  else if (key.startsWith('tag:')) f.tags = (f.tags || []).filter((c) => c !== key.slice(4));
+  saveState();
+  renderHome();
 }
 
 /* ---------- nav / fab ---------- */
@@ -557,33 +798,90 @@ function closeSheet() {
 
 /* ---------- task form ---------- */
 
-let editingTaskId = null;
-
-function renderCategoryChips() {
-  $('#tf-category').innerHTML = CATEGORIES.map(
-    (c) => `<button class="chip cat-chip" data-cat="${c.id}">${c.name}</button>`
-  ).join('');
-}
-
 function renderPriorityChips(selected) {
-  $$('#tf-priority .chip').forEach((chip) => {
+  $$('#tf-priority .prio-chip').forEach((chip) => {
     chip.classList.toggle('sel', chip.dataset.priority === selected);
   });
 }
 
+function renderTagChips() {
+  $('#tf-tags').innerHTML = LABELS.map((l) => {
+    const sel = editingTags.includes(l.color);
+    return `
+      <button class="tag-chip ${sel ? 'sel' : ''}" data-tag="${l.color}"
+        style="${sel ? `background:${l.color};border-color:${l.color};color:#fff` : ''}">
+        <span class="prio-dot" style="background:${l.color}"></span>${l.name}
+      </button>`;
+  }).join('');
+}
+
+function renderCatMenu() {
+  $('#tf-cat-menu').innerHTML = CATEGORIES.map(
+    (c) => `
+      <button class="select-item" data-cat="${c.id}">
+        <span class="prio-dot" style="background:${c.color || '#CBD5E1'}"></span>${c.name}
+      </button>`
+  ).join('');
+}
+
+function setCatValue(id) {
+  const cat = CATEGORIES.find((c) => c.id === id) || CATEGORIES[0];
+  $('#tf-cat-value').innerHTML =
+    `<span class="prio-dot" style="background:${cat.color || '#CBD5E1'}"></span>${cat.name}`;
+}
+
+function renderSubtasks() {
+  $('#tf-subtasks').innerHTML = editingSubtasks
+    .map(
+      (s) => `
+      <div class="subtask-item">
+        <button class="subtask-check ${s.done ? 'on' : ''}" data-sub="${s.id}" aria-label="Centang subtask">
+          <svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+        </button>
+        <span class="${s.done ? 'done' : ''}">${escapeHtml(s.title)}</span>
+        <button class="subtask-del" data-sub="${s.id}" title="Hapus subtask">✕</button>
+      </div>`
+    )
+    .join('');
+}
+
 function openTaskSheet(task) {
   editingTaskId = task ? task.id : null;
-  $('#sheet-task-title').textContent = task ? 'Edit Tugas' : 'Tambah Tugas';
+  $('#sheet-task-title').textContent = task ? 'Edit Tugas' : 'Tugas Baru';
   $('#tf-title').value = task ? task.title : '';
-  $('#tf-desc').value = task ? task.desc : '';
+  $('#tf-count').textContent = `${$('#tf-title').value.length}/80`;
+  $('#tf-desc').value = task ? (task.desc || '') : '';
+  renderPriorityChips(task ? task.priority : 'p3');
+  editingCat = task ? (task.categoryId || 'none') : 'none';
+  setCatValue(editingCat);
+  $('#tf-cat-menu').hidden = true;
+  editingTags = task ? [...(task.tags || [])] : [];
+  renderTagChips();
+  editingRecur = task ? (task.recurrence || '') : '';
+  $('#tf-recur-value').textContent = RECURRENCE[editingRecur] || RECURRENCE[''];
+  $('#tf-recur-menu').hidden = true;
   $('#tf-date').value = task && task.dueDate ? task.dueDate : '';
-  $('#tf-delete').hidden = !task;
-  renderPriorityChips(task ? task.priority : 'p2');
-  renderCategoryChips();
-  $$('#tf-category .chip').forEach((chip) => {
-    chip.classList.toggle('sel', (task ? task.categoryId : 'none') === chip.dataset.cat);
-  });
+  $('#tf-date').hidden = true;
+  $('#tf-date-value').textContent =
+    task && task.dueDate ? shortDate(task.dueDate) : 'Pilih tanggal';
+  $('#tf-reminder').value = String(task && task.reminder != null ? task.reminder : 30);
+  $('#tf-estimated').value = task && task.estimated != null ? String(task.estimated) : '';
+  editingSubtasks = task ? [...(task.subtasks || [])] : [];
+  $('#edit-only').hidden = !task;
+  renderSubtasks();
   openSheet('sheet-task');
+}
+
+function shortDate(key) {
+  const d = parseKey(key);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function openTaskSheetFromTemplate(tpl) {
+  openTaskSheet(null);
+  $('#tf-title').value = tpl.title;
+  $('#tf-count').textContent = `${tpl.title.length}/80`;
+  $('#tf-desc').value = tpl.desc || '';
 }
 
 function saveTaskFromForm() {
@@ -592,30 +890,30 @@ function saveTaskFromForm() {
     toast('Judul wajib diisi');
     return;
   }
-  const priority = $('#tf-priority .chip.sel')?.dataset.priority || 'p2';
-  const categoryId = $('#tf-category .chip.sel')?.dataset.cat || 'none';
+  const priority = $('#tf-priority .prio-chip.sel')?.dataset.priority || 'p3';
   const dueDate = $('#tf-date').value || null;
+  const data = {
+    title,
+    desc: $('#tf-desc').value.trim(),
+    priority,
+    categoryId: editingCat,
+    dueDate,
+    tags: editingTags,
+    recurrence: editingRecur,
+    reminder: parseInt($('#tf-reminder').value, 10) || 30,
+    estimated: $('#tf-estimated').value ? parseInt($('#tf-estimated').value, 10) : null,
+    subtasks: editingSubtasks,
+  };
 
   if (editingTaskId) {
     state = {
       ...state,
       tasks: state.tasks.map((t) =>
-        t.id === editingTaskId
-          ? { ...t, title, desc: $('#tf-desc').value.trim(), priority, categoryId, dueDate }
-          : t
+        t.id === editingTaskId ? { ...t, ...data } : t
       ),
     };
   } else {
-    state = addTask(state, {
-      id: uid(),
-      title,
-      desc: $('#tf-desc').value.trim(),
-      priority,
-      categoryId,
-      dueDate,
-      isCompleted: false,
-      tags: [],
-    });
+    state = addTask(state, { id: uid(), isCompleted: false, archived: false, ...data });
   }
   saveState();
   closeSheet();
@@ -627,7 +925,7 @@ function saveTaskFromForm() {
 function renderTemplates() {
   $('#template-list').innerHTML = TEMPLATES.map(
     (t) => `
-      <div class="tpl-item" data-title="${t.title}">
+      <div class="tpl-item" data-id="${t.title}">
         <span class="tpl-ico">
           <svg viewBox="0 0 24 24"><path d="M17 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-5 14.5L6.5 13l1.4-1.4L12 14.7l4.1-4.1L17.5 12 12 17.5z"/></svg>
         </span>
@@ -641,14 +939,26 @@ function renderTemplates() {
 
 /* ---------- note form ---------- */
 
-let editingNoteId = null;
+function renderNoteColors() {
+  $('#nf-colors').innerHTML = `
+    <button class="color-dot none ${!editingNoteColor ? 'sel' : ''}" data-color="" title="Tanpa warna"
+      style="background:var(--surface);border-color:var(--line)"></button>` +
+    NOTE_COLORS.map(
+      (c) =>
+        `<button class="color-dot ${c === editingNoteColor ? 'sel' : ''}" data-color="${c}"
+           style="background:${c}"></button>`
+    ).join('');
+}
 
 function openNoteSheet(note) {
   editingNoteId = note ? note.id : null;
-  $('#sheet-note-title').textContent = note ? 'Edit Catatan' : 'Tambah Catatan';
+  editingNoteColor = note ? (note.color || null) : null;
+  $('#sheet-note-title').textContent = note ? 'Edit Catatan' : 'Catatan Baru';
   $('#nf-title').value = note ? note.title : '';
   $('#nf-body').value = note ? note.body : '';
-  $('#nf-delete').hidden = !note;
+  $('#nf-pin').checked = !!(note && note.pinned);
+  $('#nf-save').textContent = note ? 'Simpan' : 'Tambah';
+  renderNoteColors();
   openSheet('sheet-note');
 }
 
@@ -659,19 +969,95 @@ function saveNoteFromForm() {
     return;
   }
   const body = $('#nf-body').value.trim();
+  const data = {
+    title,
+    body,
+    color: editingNoteColor,
+    pinned: $('#nf-pin').checked,
+  };
   if (editingNoteId) {
     state = {
       ...state,
       notes: state.notes.map((n) =>
-        n.id === editingNoteId ? { ...n, title, body } : n
+        n.id === editingNoteId ? { ...n, ...data } : n
       ),
     };
   } else {
-    state = addNote(state, { id: uid(), title, body, createdAt: dateKey(new Date()) });
+    state = addNote(state, { id: uid(), createdAt: dateKey(new Date()), ...data });
   }
   saveState();
   closeSheet();
   renderNotes();
+}
+
+/* ---------- filter sheet ---------- */
+
+let draftFilter = null;
+
+function renderFilterSheet() {
+  const f = draftFilter;
+  const statusChips = [
+    ['all', 'Semua'],
+    ['open', 'Belum Selesai'],
+    ['done', 'Selesai'],
+  ];
+  $('#filter-status').innerHTML = statusChips
+    .map(([v, l]) => `<button class="chip ${f.status === v ? 'sel' : ''}" data-status="${v}">${l}</button>`)
+    .join('');
+
+  $('#filter-priority').innerHTML =
+    `<button class="chip ${f.priority === 'all' ? 'sel' : ''}" data-priority="all">Semua</button>` +
+    Object.entries(PRIORITY)
+      .map(([k, p]) =>
+        `<button class="chip ${f.priority === k ? 'sel' : ''}" data-priority="${k}">
+           <span class="prio-dot" style="background:${p.color}"></span>${PRIORITY_NAMES[k]}
+         </button>`
+      )
+      .join('');
+
+  $('#filter-category').innerHTML =
+    `<button class="chip ${f.category === 'all' ? 'sel' : ''}" data-cat="all">Semua</button>` +
+    CATEGORIES.filter((c) => c.id !== 'none')
+      .map((c) =>
+        `<button class="chip ${f.category === c.id ? 'sel' : ''}" data-cat="${c.id}">
+           <span class="prio-dot" style="background:${c.color}"></span>${c.name}
+         </button>`
+      )
+      .join('');
+
+  $('#filter-tags').innerHTML =
+    `<button class="chip ${!f.tags || !f.tags.length ? 'sel' : ''}" data-tag="all">Semua</button>` +
+    LABELS.map((l) =>
+      `<button class="chip ${(f.tags || []).includes(l.color) ? 'sel' : ''}" data-tag="${l.color}">
+         <span class="prio-dot" style="background:${l.color}"></span>${l.name}
+       </button>`
+    ).join('');
+}
+
+/* ---------- sticker / accent ---------- */
+
+function renderStickerGrid() {
+  $('#sticker-grid').innerHTML = STICKERS.map(
+    (s) => `
+      <button class="sticker-item ${s.e === stickerDraft ? 'sel' : ''}" data-sticker="${s.e}"
+        title="${s.n}">${s.e}</button>`
+  ).join('');
+}
+
+function openStickerSheet() {
+  stickerDraft = state.sticker || '';
+  $('#sticker-text').value = STICKERS.some((s) => s.e === stickerDraft) ? '' : stickerDraft;
+  $('#sticker-preview-box').textContent = stickerDraft || '✨';
+  renderStickerGrid();
+  openSheet('sheet-sticker');
+}
+
+function renderAccentGrid() {
+  $('#accent-grid').innerHTML = ACCENTS.map(
+    (c) =>
+      `<button class="accent-dot ${c === state.accent ? 'sel' : ''}" data-accent="${c}"
+         style="background:${c}"></button>`
+  ).join('');
 }
 
 /* ---------- focus timer ---------- */
@@ -713,7 +1099,112 @@ function resetFocus() {
   renderFocusTimer();
 }
 
+/* ---------- swipe to delete ---------- */
+
+function bindSwipes(container) {
+  if (!container) return;
+  container.querySelectorAll('.task-card').forEach((card) => {
+    card.addEventListener('pointerdown', onSwipeDown, { passive: true });
+  });
+}
+
+function onSwipeDown(e) {
+  if (e.button !== 0) return;
+  const card = e.target.closest('.task-card');
+  if (!card) return;
+  swipe = { card, startX: e.clientX, dx: 0, active: false };
+  window.addEventListener('pointermove', onSwipeMove, { passive: true });
+  window.addEventListener('pointerup', onSwipeUp);
+}
+
+function onSwipeMove(e) {
+  if (!swipe) return;
+  const dx = e.clientX - swipe.startX;
+  if (!swipe.active && Math.abs(dx) > 10) swipe.active = true;
+  if (swipe.active) {
+    swipe.dx = dx;
+    swipe.card.style.transition = 'none';
+    swipe.card.style.transform = `translateX(${dx}px)`;
+  }
+}
+
+function onSwipeUp() {
+  const s = swipe;
+  swipe = null;
+  window.removeEventListener('pointermove', onSwipeMove);
+  window.removeEventListener('pointerup', onSwipeUp);
+  if (!s) return;
+  if (!s.active) {
+    s.card.style.transform = '';
+    return;
+  }
+  s.card.dataset.swiped = '1';
+  setTimeout(() => { delete s.card.dataset.swiped; }, 150);
+  if (s.dx < -64) {
+    const id = s.card.dataset.id;
+    s.card.style.transition = 'transform .25s ease';
+    s.card.style.transform = 'translateX(-120%)';
+    setTimeout(() => {
+      state = deleteTask(state, id);
+      saveState();
+      renderAll();
+      toast('Tugas dihapus');
+    }, 240);
+  } else {
+    s.card.style.transition = 'transform .2s ease';
+    s.card.style.transform = '';
+    setTimeout(() => { s.card.style.transition = ''; }, 200);
+  }
+}
+
 /* ---------- interactions ---------- */
+
+function onTaskCardClick(e) {
+  const card = e.target.closest('.task-card');
+  if (!card) return;
+  if (card.dataset.swiped === '1') {
+    card.dataset.swiped = '';
+    return;
+  }
+  const toggleBtn = e.target.closest('[data-act="toggle"]');
+  const delBtn = e.target.closest('[data-act="delete"]');
+  if (toggleBtn) {
+    state = toggleTask(state, card.dataset.id);
+    saveState();
+    renderAll();
+    return;
+  }
+  if (delBtn) {
+    state = deleteTask(state, card.dataset.id);
+    saveState();
+    renderAll();
+    toast('Tugas dihapus');
+    return;
+  }
+  const task = state.tasks.find((t) => t.id === card.dataset.id);
+  if (task) openTaskSheet(task);
+}
+
+function toggleNoteSearch() {
+  const existing = $('#notes-search-box');
+  if (existing) {
+    existing.remove();
+    noteSearchQ = null;
+    renderNotes();
+    return;
+  }
+  const box = document.createElement('div');
+  box.id = 'notes-search-box';
+  box.className = 'notes-search';
+  box.innerHTML = '<input type="text" placeholder="Cari catatan..." autofocus>';
+  box.querySelector('input').addEventListener('input', (e) => {
+    noteSearchQ = e.target.value.trim();
+    renderNotes();
+  });
+  $('#pin-head').parentElement.insertBefore(box, $('#pin-head'));
+  renderNotes();
+  box.querySelector('input').focus();
+}
 
 function bindEvents() {
   /* nav */
@@ -745,31 +1236,74 @@ function bindEvents() {
     renderHabits();
     openSheet('sheet-habit');
   });
+  $('#home-empty-action').addEventListener('click', () => openTaskSheet());
 
-  /* demo-only buttons */
-  $('#btn-search').addEventListener('click', () => toast('Pencarian hanya ada di app asli'));
-  $('#btn-filter').addEventListener('click', () => toast('Filter hanya ada di app asli'));
+  /* search (home) */
+  $('#btn-search').addEventListener('click', () => {
+    const input = $('#search-input');
+    if (input.hidden) {
+      input.hidden = false;
+      input.focus();
+    } else {
+      input.hidden = true;
+      input.value = '';
+      searchQ = '';
+      renderHome();
+    }
+  });
+  $('#search-input').addEventListener('input', (e) => {
+    searchQ = e.target.value;
+    renderHome();
+  });
 
-  /* task list interactions (delegated) */
-  const taskLists = ['#task-list', '#cal-day-tasks', '#day-tasks'];
-  taskLists.forEach((sel) => {
-    document.querySelector(sel).addEventListener('click', (e) => {
-      const toggleBtn = e.target.closest('[data-act="toggle"]');
-      const delBtn = e.target.closest('[data-act="delete"]');
-      const card = e.target.closest('.task-card');
-      if (!card) return;
-      if (toggleBtn) {
-        state = toggleTask(state, card.dataset.id);
-      } else if (delBtn) {
-        state = deleteTask(state, card.dataset.id);
-      } else {
-        const task = state.tasks.find((t) => t.id === card.dataset.id);
-        if (task) openTaskSheet(task);
-        return;
+  /* filter (home) */
+  $('#btn-filter').addEventListener('click', () => {
+    draftFilter = {
+      status: state.filter.status,
+      priority: state.filter.priority,
+      category: state.filter.category,
+      tags: [...(state.filter.tags || [])],
+    };
+    renderFilterSheet();
+    openSheet('sheet-filter');
+  });
+  $('#filter-reset').addEventListener('click', () => {
+    draftFilter = { status: 'all', priority: 'all', category: 'all', tags: [] };
+    renderFilterSheet();
+  });
+  $('#filter-apply').addEventListener('click', () => {
+    state.filter = draftFilter;
+    saveState();
+    closeSheet();
+    renderHome();
+  });
+  $('#filter-chips').addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-clear]');
+    if (chip) clearFilter(chip.dataset.clear);
+  });
+  $('#sheet-filter .sheet-body').addEventListener('click', (e) => {
+    const st = e.target.closest('[data-status]');
+    if (st) { draftFilter.status = st.dataset.status; renderFilterSheet(); return; }
+    const pr = e.target.closest('[data-priority]');
+    if (pr) { draftFilter.priority = pr.dataset.priority; renderFilterSheet(); return; }
+    const cat = e.target.closest('[data-cat]');
+    if (cat) { draftFilter.category = cat.dataset.cat; renderFilterSheet(); return; }
+    const tag = e.target.closest('[data-tag]');
+    if (tag) {
+      if (tag.dataset.tag === 'all') draftFilter.tags = [];
+      else {
+        const arr = draftFilter.tags || [];
+        draftFilter.tags = arr.includes(tag.dataset.tag)
+          ? arr.filter((c) => c !== tag.dataset.tag)
+          : [...arr, tag.dataset.tag];
       }
-      saveState();
-      renderAll();
-    });
+      renderFilterSheet();
+    }
+  });
+
+  /* task lists (delegated) */
+  ['#task-sections', '#agenda-list', '#day-tasks'].forEach((sel) => {
+    document.querySelector(sel).addEventListener('click', onTaskCardClick);
   });
 
   /* calendar */
@@ -781,7 +1315,7 @@ function bindEvents() {
     calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 1, 1);
     renderCalendar();
   });
-  $('#btn-cal-today').addEventListener('click', () => {
+  $('#cal-today').addEventListener('click', () => {
     calendarCursor = parseKey(dateKey(new Date()));
     selectedDayKey = dateKey(new Date());
     renderCalendar();
@@ -791,11 +1325,21 @@ function bindEvents() {
     if (!cell) return;
     selectedDayKey = cell.dataset.day;
     renderCalendar();
+    renderDaySheet(selectedDayKey);
   });
 
-  /* sheet backdrop */
+  /* week chart */
+  $('#week-chart').addEventListener('click', (e) => {
+    const col = e.target.closest('[data-i]');
+    if (!col) return;
+    const i = parseInt(col.dataset.i, 10);
+    const count = lastWeekCounts[i] || 0;
+    toast(`${DAY_SHORT[(i + 1) % 7]}: ${count} tugas`);
+  });
+
+  /* sheet backdrop + close buttons */
   $('#sheet-backdrop').addEventListener('click', (e) => {
-    if (e.target.id === 'sheet-backdrop') closeSheet();
+    if (e.target.closest('[data-close]')) closeSheet();
   });
 
   /* task form */
@@ -803,57 +1347,130 @@ function bindEvents() {
     const chip = e.target.closest('[data-priority]');
     if (chip) renderPriorityChips(chip.dataset.priority);
   });
-  $('#tf-category').addEventListener('click', (e) => {
-    const chip = e.target.closest('[data-cat]');
+  $('#tf-tags').addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-tag]');
     if (!chip) return;
-    $$('#tf-category .chip').forEach((c) => c.classList.toggle('sel', c === chip));
+    const color = chip.dataset.tag;
+    editingTags = editingTags.includes(color)
+      ? editingTags.filter((c) => c !== color)
+      : [...editingTags, color];
+    renderTagChips();
   });
-  $('#tf-save').addEventListener('click', saveTaskFromForm);
-  $('#tf-delete').addEventListener('click', () => {
-    if (!editingTaskId) return;
-    state = deleteTask(state, editingTaskId);
-    saveState();
-    closeSheet();
-    renderAll();
+  $('#tf-cat-toggle').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const menu = $('#tf-cat-menu');
+    $('#tf-recur-menu').hidden = true;
+    menu.hidden = !menu.hidden;
+  });
+  $('#tf-cat-menu').addEventListener('click', (e) => {
+    const item = e.target.closest('[data-cat]');
+    if (!item) return;
+    editingCat = item.dataset.cat;
+    setCatValue(editingCat);
+    $('#tf-cat-menu').hidden = true;
+  });
+  $('#tf-recur-toggle').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const menu = $('#tf-recur-menu');
+    $('#tf-cat-menu').hidden = true;
+    menu.hidden = !menu.hidden;
+  });
+  $('#tf-recur-menu').addEventListener('click', (e) => {
+    const item = e.target.closest('[data-recur]');
+    if (!item) return;
+    editingRecur = item.dataset.recur;
+    $('#tf-recur-value').textContent = RECURRENCE[editingRecur];
+    $('#tf-recur-menu').hidden = true;
+  });
+  document.addEventListener('click', () => {
+    $('#tf-cat-menu').hidden = true;
+    $('#tf-recur-menu').hidden = true;
+  });
+  $('#tf-date-toggle').addEventListener('click', () => {
+    const input = $('#tf-date');
+    input.hidden = false;
+    input.focus();
+    if (input.showPicker) input.showPicker();
+  });
+  $('#tf-date').addEventListener('change', (e) => {
+    const v = e.target.value;
+    e.target.hidden = true;
+    $('#tf-date-value').textContent = v ? shortDate(v) : 'Pilih tanggal';
+  });
+  $('#tf-title').addEventListener('input', (e) => {
+    $('#tf-count').textContent = `${e.target.value.length}/80`;
   });
   $('#tf-title').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') saveTaskFromForm();
   });
-
-  /* template picker */
-  $('#template-list').addEventListener('click', (e) => {
-    const item = e.target.closest('.tpl-item');
-    if (!item) return;
-    state = addTask(state, {
-      id: uid(),
-      title: item.dataset.title,
-      desc: '',
-      priority: 'p2',
-      categoryId: 'none',
-      dueDate: null,
-      isCompleted: false,
-      tags: [],
-    });
+  $('#tf-subtask-add').addEventListener('click', () => {
+    const input = $('#tf-subtask-input');
+    const title = input.value.trim();
+    if (!title) return;
+    editingSubtasks = [...editingSubtasks, { id: uid(), title, done: false }];
+    input.value = '';
+    renderSubtasks();
+  });
+  $('#tf-subtask-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('#tf-subtask-add').click();
+  });
+  $('#tf-subtasks').addEventListener('click', (e) => {
+    const check = e.target.closest('.subtask-check');
+    const del = e.target.closest('.subtask-del');
+    if (check) {
+      const id = check.dataset.sub;
+      editingSubtasks = editingSubtasks.map((s) =>
+        s.id === id ? { ...s, done: !s.done } : s
+      );
+      renderSubtasks();
+    } else if (del) {
+      const id = del.dataset.sub;
+      editingSubtasks = editingSubtasks.filter((s) => s.id !== id);
+      renderSubtasks();
+    }
+  });
+  $('#tf-save').addEventListener('click', saveTaskFromForm);
+  $('#tf-archive').addEventListener('click', () => {
+    if (!editingTaskId) return;
+    state = {
+      ...state,
+      tasks: state.tasks.map((t) =>
+        t.id === editingTaskId ? { ...t, archived: true } : t
+      ),
+    };
     saveState();
     closeSheet();
     renderAll();
-    toast(`Template ditambahkan: ${item.dataset.title}`);
+    toast('Tugas diarsipkan');
+  });
+  $('#tf-template').addEventListener('click', () => {
+    toast('Disimpan sebagai template');
+  });
+
+  /* template picker */
+  $('#template-list').addEventListener('click', (e) => {
+    const item = e.target.closest('[data-id]');
+    if (!item) return;
+    const tpl = TEMPLATES.find((t) => t.title === item.dataset.id);
+    if (!tpl) return;
+    closeSheet();
+    openTaskSheetFromTemplate(tpl);
   });
 
   /* notes */
-  $('#notes-list').addEventListener('click', (e) => {
+  $('#btn-note-search').addEventListener('click', toggleNoteSearch);
+  $('#notes-grid').addEventListener('click', (e) => {
     const card = e.target.closest('.note-card');
     if (!card) return;
     const note = state.notes.find((n) => n.id === card.dataset.id);
     if (note) openNoteSheet(note);
   });
   $('#nf-save').addEventListener('click', saveNoteFromForm);
-  $('#nf-delete').addEventListener('click', () => {
-    if (!editingNoteId) return;
-    state = deleteNote(state, editingNoteId);
-    saveState();
-    closeSheet();
-    renderNotes();
+  $('#nf-colors').addEventListener('click', (e) => {
+    const dot = e.target.closest('[data-color]');
+    if (!dot) return;
+    editingNoteColor = dot.dataset.color || null;
+    renderNoteColors();
   });
 
   /* habits */
@@ -886,38 +1503,102 @@ function bindEvents() {
   $('#focus-reset').addEventListener('click', resetFocus);
 
   /* settings */
-  $('#theme-switch').addEventListener('change', (e) => {
-    state = { ...state, theme: e.target.checked ? 'dark' : 'light' };
-    saveState();
-    applyTheme();
+  $$('.set-row[data-mode]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state = { ...state, theme: btn.dataset.mode };
+      saveState();
+      applyTheme();
+    });
   });
-  $('#accent-row').addEventListener('click', (e) => {
+  $('#btn-accent').addEventListener('click', () => {
+    renderAccentGrid();
+    openSheet('sheet-accent');
+  });
+  $('#accent-grid').addEventListener('click', (e) => {
     const dot = e.target.closest('[data-accent]');
     if (!dot) return;
     state = { ...state, accent: dot.dataset.accent };
     saveState();
     applyAccent();
-    renderAll();
+    closeSheet();
+    toast(`Warna aksen: ${dot.dataset.accent.toUpperCase()}`);
   });
-  $('#sticker-row').addEventListener('click', (e) => {
-    const chip = e.target.closest('[data-sticker]');
-    if (!chip) return;
-    state = { ...state, sticker: chip.dataset.sticker };
+  $('#btn-sticker').addEventListener('click', openStickerSheet);
+  $('#sticker-text').addEventListener('input', (e) => {
+    stickerDraft = e.target.value;
+    $('#sticker-preview-box').textContent = stickerDraft || '✨';
+    renderStickerGrid();
+  });
+  $('#sticker-grid').addEventListener('click', (e) => {
+    const item = e.target.closest('[data-sticker]');
+    if (!item) return;
+    stickerDraft = item.dataset.sticker;
+    $('#sticker-text').value = '';
+    $('#sticker-preview-box').textContent = stickerDraft;
+    renderStickerGrid();
+  });
+  $('#sticker-none').addEventListener('click', () => {
+    stickerDraft = '';
+    $('#sticker-text').value = '';
+    $('#sticker-preview-box').textContent = '🚫';
+    renderStickerGrid();
+  });
+  $('#sticker-save').addEventListener('click', () => {
+    state = { ...state, sticker: stickerDraft };
     saveState();
-    renderAccentRow();
-    toast(`Stiker widget: ${chip.dataset.sticker}`);
+    renderSettings();
+    closeSheet();
+    toast('Stiker widget disimpan');
   });
   $$('.set-row[data-toast]').forEach((btn) => {
     btn.addEventListener('click', () => toast(btn.dataset.toast));
   });
+  $('#btn-muat-contoh').addEventListener('click', () => {
+    if (state.tasks.some((t) => t.example)) {
+      toast('Contoh data sudah ada');
+      return;
+    }
+    const seed = makeSeedState(new Date());
+    state = {
+      ...state,
+      tasks: [...state.tasks, ...seed.tasks],
+      notes: [...state.notes, ...seed.notes],
+      habits: [...state.habits, ...seed.habits],
+    };
+    saveState();
+    renderAll();
+    toast('Contoh data dimuat');
+  });
+  $('#btn-hapus-contoh').addEventListener('click', () => {
+    state = {
+      ...state,
+      tasks: state.tasks.filter((t) => !t.example),
+      notes: state.notes.filter((n) => !n.example),
+      habits: state.habits.filter((h) => !h.example),
+    };
+    saveState();
+    renderAll();
+    toast('Contoh data dihapus');
+  });
+  $('#btn-hapus-data').addEventListener('click', () => {
+    if (!window.confirm('Hapus semua data?')) return;
+    state = { ...state, tasks: [], notes: [], habits: [] };
+    saveState();
+    renderAll();
+    toast('Semua data dihapus');
+  });
+  $('#btn-ulangi-tour').addEventListener('click', showTour);
 
-  /* reset demo */
-  const resetDemo = () => {
+  /* reset demo (panel) */
+  $('#btn-reset-panel').addEventListener('click', () => {
     try {
       localStorage.removeItem(LS_KEY);
     } catch (_) { /* ignore */ }
-    state = makeSeedState(new Date());
-    saveState();
+    state = migrateState(makeSeedState(new Date()));
+    searchQ = '';
+    noteSearchQ = null;
+    const box = $('#notes-search-box');
+    if (box) box.remove();
     currentTab = 'home';
     selectedDayKey = null;
     calendarCursor = null;
@@ -925,23 +1606,38 @@ function bindEvents() {
     if (focusInterval) { clearInterval(focusInterval); focusInterval = null; }
     applyTheme();
     applyAccent();
-    setTab('home');
     renderAll();
     closeSheet();
     toast('Data demo direset');
-  };
-  $('#btn-reset-demo').addEventListener('click', resetDemo);
-  $('#btn-reset-panel').addEventListener('click', resetDemo);
+  });
+}
+
+/* ---------- splash / tour ---------- */
+
+let splashMarkup = null;
+
+function showTour() {
+  if ($('#splash')) return;
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = splashMarkup.trim();
+  const node = wrapper.firstElementChild;
+  $('#app').prepend(node);
+  setTimeout(() => node.classList.add('done'), 900);
+  setTimeout(() => node.remove(), 1500);
 }
 
 /* ---------- init ---------- */
 
 function init() {
-  state = loadState() || makeSeedState(new Date());
+  const raw = loadState();
+  state = raw ? migrateState(raw) : makeSeedState(new Date());
 
   selectedDayKey = dateKey(new Date());
   calendarCursor = parseKey(selectedDayKey);
   focusRemaining = 25 * 60;
+
+  initRingGradient('hero-grad', $('#hero-ring'));
+  initRingGradient('dash-grad', $('#dash-ring'));
 
   applyTheme();
   applyAccent();
@@ -950,6 +1646,7 @@ function init() {
 
   /* splash */
   const splash = $('#splash');
+  splashMarkup = splash.outerHTML;
   setTimeout(() => splash.classList.add('done'), 900);
   setTimeout(() => { splash.remove(); }, 1500);
 }
@@ -973,11 +1670,16 @@ if (typeof module !== 'undefined' && module.exports) {
     computeStats,
     weeklyCounts,
     formatDateLabel,
+    longDate,
     dateKey,
     addDays,
     sortTasks,
     todayTasks,
+    filterTasks,
+    groupTasks,
+    categoryOf,
     CATEGORIES,
+    LABELS,
     TEMPLATES,
     PRIORITY,
     uid,

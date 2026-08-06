@@ -15,11 +15,15 @@ const {
   computeStats,
   weeklyCounts,
   formatDateLabel,
+  longDate,
   dateKey,
   addDays,
   sortTasks,
   todayTasks,
+  filterTasks,
+  groupTasks,
   CATEGORIES,
+  LABELS,
   TEMPLATES,
   PRIORITY,
 } = require('../js/demo.js');
@@ -109,6 +113,37 @@ test('addHabit/deleteHabit: kebiasaan tambah & hapus', () => {
   const id = s2.habits[0].id;
   s2 = deleteHabit(s2, id);
   assert.strictEqual(s2.habits.length, 0);
+});
+
+/* ---------- grouping & filter ---------- */
+test('groupTasks: Terlambat=2, Hari Ini=3, Besok=2, Nanti=3', () => {
+  const g = groupTasks(s.tasks, TODAY);
+  assert.strictEqual(g.overdue.length, 2); // Jogging pagi, Baca 10 halaman
+  assert.strictEqual(g.today.length, 3); // laporan, olahraga, meeting
+  assert.strictEqual(g.tomorrow.length, 2); // beli bahan, ganti password
+  assert.strictEqual(g.later.length, 3); // mockup, refactor, baca artikel
+});
+
+test('filterTasks: status open → 7, prioritas p1 → 3', () => {
+  assert.strictEqual(
+    filterTasks(s.tasks, { status: 'open', priority: 'all', category: 'all', tags: [] }).length,
+    7
+  );
+  assert.strictEqual(
+    filterTasks(s.tasks, { status: 'all', priority: 'p1', category: 'all', tags: [] }).length,
+    3
+  );
+});
+
+test('filterTasks: kategori kerja → 4, label #F59E0B → 2', () => {
+  assert.strictEqual(
+    filterTasks(s.tasks, { status: 'all', priority: 'all', category: 'kerja', tags: [] }).length,
+    4
+  );
+  assert.strictEqual(
+    filterTasks(s.tasks, { status: 'all', priority: 'all', category: 'all', tags: ['#F59E0B'] }).length,
+    2
+  );
 });
 
 /* ---------- sorting ---------- */
