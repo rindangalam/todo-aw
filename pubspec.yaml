@@ -59,7 +59,10 @@ dependency_overrides:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/icon/icon.png"
+  remove_alpha_ios: true
+  background_color: "#0A1B3A"
+  image_path: "assets/icon/todoaw_light.png"
+  image_path_ios: "assets/icon/todoaw_light.png"
 
 flutter:
   uses-material-design: true
