@@ -29,3 +29,46 @@ subprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+// AGP 8+ requires every module to declare an explicit `namespace`.
+// Older Flutter plugins (flutter_local_notifications, home_widget, file_picker)
+// still rely on the legacy Manifest `package` attribute, which AGP 8 removed.
+// Restore it for any android module that doesn't declare a namespace yet, and
+// keep Java/Kotlin bytecode targets consistent (old plugins leave Kotlin at the
+// default JVM target, which mismatches their 1.8 javac target under AGP 8).
+subprojects {
+    def fixModule = { proj ->
+        def androidLib = proj.plugins.hasPlugin('com.android.library')
+        def androidApp = proj.plugins.hasPlugin('com.android.application')
+        if (androidLib || androidApp) {
+            if (proj.android.namespace == null || proj.android.namespace.isEmpty()) {
+                def manifestFile = proj.file('src/main/AndroidManifest.xml')
+                if (manifestFile.exists()) {
+                    def manifest = new XmlParser().parse(manifestFile)
+                    def pkg = manifest.attributes().get('package')
+                    if (pkg != null) {
+                        println "Restoring namespace for ${proj.name}: ${pkg}"
+                        proj.android.namespace = pkg.toString()
+                    }
+                }
+            }
+        }
+        if (androidLib) {
+            proj.android.compileOptions.sourceCompatibility = JavaVersion.VERSION_17
+            proj.android.compileOptions.targetCompatibility = JavaVersion.VERSION_17
+            if (proj.plugins.hasPlugin('org.jetbrains.kotlin.android')) {
+                proj.tasks.withType(
+                        org.jetbrains.kotlin.gradle.tasks.KotlinCompile.class).configureEach {
+                    it.kotlinOptions.jvmTarget = '17'
+                }
+            }
+        }
+    }
+    if (project.state.executed) {
+        fixModule(project)
+    } else {
+        project.afterEvaluate {
+            fixModule(it)
+        }
+    }
+}
