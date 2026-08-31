@@ -11,7 +11,7 @@
 
 ---
 
-## 📋 Overview
+## Overview
 
 **Todoaw** is a full-featured, offline-first productivity application designed to help you organize daily tasks, capture ideas, track habits, and maintain focus — all while keeping your data completely private and stored locally on your device. Built specifically for Indonesian users with Bahasa Indonesia as a first-class citizen.
 
@@ -24,9 +24,9 @@
 
 ---
 
-## ✨ Features
+## Features
 
-### 📋 Task Management
+### Task Management
 
 #### Comprehensive Task System
 - **CRUD operations** - Create, edit, complete, delete tasks easily
@@ -39,47 +39,47 @@
 - **Deadlines & Reminders** - Set due dates with notification reminders (5/15/30/60 min before)
 - **Archive & Trash** - Archive completed tasks; deleted tasks auto-purge after 30 days
 
-### 📝 Notes
+### Notes
 
 - **CRUD notes** with title and content
 - **Color coding** - 6 color options for visual organization
 - **Pin notes** - Pinned notes appear at top of grid
 - **Inline search** - Real-time search within Notes screen
 
-### 🔥 Habit Tracker
+### Habit Tracker
 
 - **CRUD habits** with daily/weekly/monthly targets
 - **Daily logging** - Check off habits each day
 - **Streak tracking** - Visualize consistency with streak counter
 - **Progress visualization**
 
-### ⏱️ Focus Timer (Pomodoro)
+### ⏱ Focus Timer (Pomodoro)
 
 - **Preset timers** - 15, 25, 30, 50 minute sessions
 - **Ring animation** showing time progress
 - **Session history** - Track total focus minutes today
 - **Haptic feedback & notifications** when session completes
 
-### 📊 Dashboard & Statistics
+### Dashboard & Statistics
 
 - **Progress ring** - Daily task completion percentage
 - **Weekly bar chart** - Tasks completed per day (Monday-Sunday)
 - **Stat cards** - Active Tasks, Completed Tasks, Total Tasks
-- **Streak indicator** - Fire 🔥 emoji showing consistent productivity
+- **Streak indicator** - Fire  emoji showing consistent productivity
 
-### 📅 Calendar
+### Calendar
 
 - **Monthly view** with prev/next navigation
 - **Color dots** on dates with scheduled tasks
 - **Daily agenda** - Task list for selected date
 - **"Today" button** - Quick return to current date
 
-### 🔍 Search & Filter
+### Search & Filter
 
 - **Real-time search** - Find tasks & notes as you type
 - **Filter sheet** - Filter by priority, category, tag, completion status, archived
 
-### 🎨 Theming & Customization
+### Theming & Customization
 
 #### Theme Modes
 - System (follow device theme)
@@ -92,13 +92,13 @@
 - **Custom mode** - HSV color slider for unlimited colors
 - **Auto-save** - Theme preferences persist across app restarts
 
-### 🚀 Onboarding & Tours
+### Onboarding & Tours
 
 - **Intro slides** - 3-page introduction on first launch
 - **Coach mark tours** - Interactive guides on Home & Notes screens
 - **Reset tours** - Re-enable tours from Settings
 
-### 💾 Data Export/Import
+### Data Export/Import
 
 #### Export Options
 - **JSON export** - Complete backup of all data
@@ -110,7 +110,7 @@
 - **JSON import** - Restore from backup
 - **Seed data** - Load sample data to try features
 
-### 🔔 Notifications & Widgets
+### Notifications & Widgets
 
 - **Task reminder notifications** based on set deadlines
 - **Focus session completion notifications**
@@ -120,7 +120,7 @@
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Technology | Purpose |
 |------------|---------|
@@ -139,7 +139,7 @@
 
 ---
 
-## 📱 Installation
+## Installation
 
 ### For End Users (Android)
 
@@ -183,46 +183,46 @@ flutter build apk --release --split-per-abi
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 todo-aw/
-├── lib/
-│   ├── core/
-│   │   ├── database/          # SQLite database layer
-│   │   ├── models/            # Data models
-│   │   ├── providers/         # Riverpod providers
-│   │   ├── router/            # go_router configuration
-│   │   └── utils/             # Helper functions
-│   ├── features/
-│   │   ├── tasks/             # Task management
-│   │   ├── notes/             # Notes feature
-│   │   ├── habits/            # Habit tracking
-│   │   ├── focus/             # Focus timer (Pomodoro)
-│   │   ├── calendar/          # Calendar view
-│   │   ├── dashboard/         # Statistics dashboard
-│   │   ├── settings/          # App settings
-│   │   └── onboarding/        # Intro & tours
-│   ├── shared/
-│   │   ├── widgets/           # Reusable widgets
-│   │   └── theme/             # Theme configuration
-│   └── main.dart              # App entry point
-├── assets/
-│   └── icon/                  # App icons
-├── android/                   # Android platform code
-├── ios/                       # iOS platform code (future)
-├── web/                       # Web platform code (future)
-├── test/                      # Unit tests
-├── integration_test/          # Integration tests
-├── PRODUCT_BIBLE.md           # Complete product documentation
-├── PRODUCT_AUDIT.md           # Product audit checklist
-├── pubspec.yaml               # Flutter dependencies
-└── README.md
+ lib/
+    core/
+       database/          # SQLite database layer
+       models/            # Data models
+       providers/         # Riverpod providers
+       router/            # go_router configuration
+       utils/             # Helper functions
+    features/
+       tasks/             # Task management
+       notes/             # Notes feature
+       habits/            # Habit tracking
+       focus/             # Focus timer (Pomodoro)
+       calendar/          # Calendar view
+       dashboard/         # Statistics dashboard
+       settings/          # App settings
+       onboarding/        # Intro & tours
+    shared/
+       widgets/           # Reusable widgets
+       theme/             # Theme configuration
+    main.dart              # App entry point
+ assets/
+    icon/                  # App icons
+ android/                   # Android platform code
+ ios/                       # iOS platform code (future)
+ web/                       # Web platform code (future)
+ test/                      # Unit tests
+ integration_test/          # Integration tests
+ PRODUCT_BIBLE.md           # Complete product documentation
+ PRODUCT_AUDIT.md           # Product audit checklist
+ pubspec.yaml               # Flutter dependencies
+ README.md
 ```
 
 ---
 
-## 🗄️ Database Schema
+## Database Schema
 
 ### Core Tables
 - `tasks` - Task records with metadata
@@ -238,7 +238,7 @@ todo-aw/
 
 ---
 
-## 🎨 Design Language
+## Design Language
 
 ### Color System
 - **Primary colors**: Based on user-selected accent color
@@ -260,7 +260,7 @@ todo-aw/
 
 ---
 
-## 🌍 Localization
+## Localization
 
 ### Currently Supported
 - **Bahasa Indonesia** (primary language)
@@ -273,7 +273,7 @@ todo-aw/
 
 ---
 
-## 🔐 Privacy & Security
+## Privacy & Security
 
 ### Privacy-First Principles
 - **100% offline** - No data sent to any server
@@ -283,9 +283,9 @@ todo-aw/
 - **Open source** - Transparent, auditable code
 
 ### Data Safety
-- ⚠️ **Data loss warning**: Clearing app data or uninstalling will delete all data
-- ✅ **Backup recommended**: Use Export feature regularly
-- ✅ **Device-only**: Data never leaves your device
+-  **Data loss warning**: Clearing app data or uninstalling will delete all data
+-  **Backup recommended**: Use Export feature regularly
+-  **Device-only**: Data never leaves your device
 
 ---
 
@@ -312,7 +312,7 @@ flutter test integration_test/
 
 ---
 
-## 🚀 Build & Release
+## Build & Release
 
 ### Android APK
 
@@ -343,7 +343,7 @@ flutter pub run flutter_launcher_icons:main
 
 ---
 
-## 📊 Performance Standards
+## Performance Standards
 
 - **App startup**: < 2 seconds (cold start)
 - **Screen transitions**: 60 FPS animations
@@ -354,7 +354,7 @@ flutter pub run flutter_launcher_icons:main
 
 ---
 
-## 🎯 Product Vision
+## Product Vision
 
 ### Mission
 1. Become the #1 task manager in Indonesia
@@ -370,9 +370,9 @@ flutter pub run flutter_launcher_icons:main
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
-### ✅ Completed (v1.0)
+### Completed (v1.0)
 - Task management with priorities and categories
 - Notes with color coding
 - Habit tracker with streaks
@@ -384,7 +384,7 @@ flutter pub run flutter_launcher_icons:main
 - Dark/light theme with custom colors
 - Onboarding & tours
 
-### 📋 Planned Features
+### Planned Features
 - iOS support
 - Web version (PWA)
 - Desktop apps (Windows, macOS, Linux)
@@ -415,20 +415,20 @@ Contributions are welcome! This is an open source project.
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-## 👤 Author
+## Author
 
 **Rindang Alam Nur Muhammad**  
 GitHub: [@rindangalam](https://github.com/rindangalam)
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Built with:
 - [Flutter](https://flutter.dev/) - Cross-platform framework
@@ -438,18 +438,18 @@ Built with:
 
 ---
 
-## 📖 Documentation
+## Documentation
 
 - **[Product Bible](PRODUCT_BIBLE.md)** - Complete product vision, philosophy, and guidelines
 - **[Product Audit](PRODUCT_AUDIT.md)** - Quality assurance checklist
 
 ---
 
-## 📧 Support
+## Support
 
 For issues, questions, or feature requests:
 - Open an issue on [GitHub Issues](https://github.com/rindangalam/todo-aw/issues)
 
 ---
 
-*Atur hidupmu, tanpa ribet. 🚀*
+*Atur hidupmu, tanpa ribet. *
