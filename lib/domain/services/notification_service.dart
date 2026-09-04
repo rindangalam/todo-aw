@@ -14,6 +14,9 @@ class NotificationService {
 
   static Future<void> init() async {
     tz.initializeTimeZones();
+    try {
+      tz.setLocalLocation(tz.getLocation('Asia/Jakarta'));
+    } catch (_) {}
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
@@ -26,6 +29,20 @@ class NotificationService {
       iOS: iosSettings,
     );
     await _plugin.initialize(settings);
+
+    // Request notification permission for Android 13+
+    final androidPlugin =
+        _plugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin != null) {
+      final granted = await androidPlugin.requestNotificationsPermission();
+      debugPrint('[NotificationService] Permission granted: $granted');
+      await androidPlugin.requestExactAlarmsPermission();
+    }
+
+    // Check pending notifications
+    final pending = await _plugin.pendingNotificationRequests();
+    debugPrint('[NotificationService] Pending: ${pending.length}');
   }
 
   static Future<void> scheduleNotification({
@@ -38,8 +55,13 @@ class NotificationService {
       'task_reminders',
       'Task Reminders',
       channelDescription: 'Reminders for your tasks',
-      importance: Importance.defaultImportance,
-      priority: Priority.defaultPriority,
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+      visibility: NotificationVisibility.public,
+      autoCancel: true,
+      ongoing: false,
     );
     const iosDetails = DarwinNotificationDetails();
     const details = NotificationDetails(
@@ -53,16 +75,20 @@ class NotificationService {
 
     try {
       final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
+      debugPrint('[NotificationService] Scheduling: $title at $tzDate');
       await _plugin.zonedSchedule(
         (id.hashCode & 0x7FFFFFFF),
         title,
         body,
         tzDate,
         details,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       );
-    } catch (_) {}
+      debugPrint('[NotificationService] Scheduled OK');
+    } catch (e) {
+      debugPrint('[NotificationService] ERROR: $e');
+    }
   }
 
   static Future<void> cancelNotification(String id) async {
@@ -76,17 +102,21 @@ class NotificationService {
   static Future<void> showImmediate({
     required String title,
     required String body,
-    String channelId = 'general',
-    String channelName = 'Notifications',
+    String channelId = 'task_reminders',
+    String channelName = 'Task Reminders',
   }) async {
     const androidDetails = AndroidNotificationDetails(
-      'focus_timer',
-      'Focus Timer',
-      channelDescription: 'Focus session completion alerts',
+      'task_reminders',
+      'Task Reminders',
+      channelDescription: 'Reminders for your tasks',
       importance: Importance.high,
       priority: Priority.high,
       playSound: true,
       enableVibration: true,
+      visibility: NotificationVisibility.public,
+      autoCancel: true,
+      ongoing: false,
+      largeIcon: null,
     );
     const iosDetails = DarwinNotificationDetails();
     const details = NotificationDetails(

@@ -1,4 +1,8 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/models/task.dart';
 import '../data/repositories/task_repository.dart';
@@ -37,6 +41,8 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
   Future<void> load() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _repository.getActive());
+    _scheduleAllNotifications();
+    _checkMissedNotifications();
     WidgetBridge.updateWidget();
   }
 
@@ -58,7 +64,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
 
     _ref.invalidate(statsProvider);
 
-    // If recurring task was completed, generate next occurrence
     if (updated.isCompleted && task.isRecurring) {
       final nextTask = _recurringService.generateNext(task);
       if (nextTask != null) {
@@ -66,7 +71,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
         if (created.dueDate != null) {
           _scheduleNotification(created);
         }
-        // Need to refresh to show the new recurring occurrence
         await refresh();
         return;
       }
@@ -204,15 +208,88 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     return task;
   }
 
+  void _scheduleAllNotifications() {
+    final tasks = state.value ?? [];
+    for (final task in tasks) {
+      if (task.dueDate != null && !task.isCompleted) {
+        _scheduleNotification(task);
+      }
+    }
+  }
+
   void _scheduleNotification(Task task) {
     final minutes = task.reminderMinutes ?? 30;
     final remindAt = task.dueDate!.subtract(Duration(minutes: minutes));
+
     if (remindAt.isBefore(DateTime.now())) return;
+
+    String priorityLabel;
+    switch (task.priority) {
+      case Priority.p1:
+        priorityLabel = '[P1 Penting]';
+        break;
+      case Priority.p2:
+        priorityLabel = '[P2]';
+        break;
+      case Priority.p3:
+        priorityLabel = '[P3]';
+        break;
+      case Priority.p4:
+        priorityLabel = '[P4]';
+        break;
+    }
+
+    final title = '$priorityLabel ${task.title}';
+    final body =
+        'Deadline: ${task.dueDate!.day}/${task.dueDate!.month}/${task.dueDate!.year} ${task.dueDate!.hour.toString().padLeft(2, '0')}:${task.dueDate!.minute.toString().padLeft(2, '0')}';
+
     NotificationService.scheduleNotification(
       id: task.uuid,
-      title: 'Task Reminder',
-      body: task.title,
+      title: title,
+      body: body,
       scheduledDate: remindAt,
     );
+  }
+
+  Future<void> _checkMissedNotifications() async {
+    final now = DateTime.now();
+    final tasks = state.value ?? [];
+    final prefs = await SharedPreferences.getInstance();
+    final missed = <Map<String, dynamic>>[];
+
+    for (final task in tasks) {
+      if (task.isCompleted || task.dueDate == null) continue;
+
+      final minutes = task.reminderMinutes ?? 30;
+      final remindAt = task.dueDate!.subtract(Duration(minutes: minutes));
+
+      if (remindAt.isBefore(now) && task.dueDate!.isAfter(now)) {
+        missed.add({
+          'uuid': task.uuid,
+          'title': task.title,
+          'priority': task.priority.name,
+          'dueDate': task.dueDate!.toIso8601String(),
+          'remindAt': remindAt.toIso8601String(),
+        });
+      }
+    }
+
+    if (missed.isNotEmpty) {
+      await prefs.setString('missed_notifications', jsonEncode(missed));
+    } else {
+      await prefs.remove('missed_notifications');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getMissedNotifications() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('missed_notifications');
+    if (raw == null) return [];
+    return List<Map<String, dynamic>>.from(jsonDecode(raw));
+  }
+
+  Future<void> clearMissedNotifications() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('missed_notifications');
   }
 }
