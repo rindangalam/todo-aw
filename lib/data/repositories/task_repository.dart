@@ -46,7 +46,12 @@ class TaskRepository {
       createdAt: now,
       updatedAt: now,
     );
-    await AppDatabase.insertTask(task);
+    try {
+      await AppDatabase.insertTask(task);
+    } catch (e) {
+      // Re-throw with context for debugging
+      throw Exception('Failed to insert task: $e');
+    }
     return task;
   }
 

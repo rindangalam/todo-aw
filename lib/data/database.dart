@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart' as sqlite;
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:path/path.dart' as p;
 
 import 'models/category.dart';
@@ -11,231 +13,239 @@ import 'models/task.dart';
 import 'models/task_tag.dart';
 
 class AppDatabase {
-  static late sqlite.Database instance;
+  static sqlite.Database? _instance;
+
+  static sqlite.Database get instance {
+    if (_instance == null) {
+      throw StateError('AppDatabase not initialized. Call AppDatabase.init() first.');
+    }
+    return _instance!;
+  }
 
   static Future<void> init({String? dbName}) async {
     final fullPath =
         dbName ?? p.join(await sqlite.getDatabasesPath(), 'todoaw.db');
-    instance = await sqlite.openDatabase(
-      fullPath,
-      version: 4,
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE tasks (
-            uuid TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            description TEXT,
-            isCompleted INTEGER NOT NULL DEFAULT 0,
-            priority INTEGER NOT NULL DEFAULT 2,
-            categoryId TEXT,
-            dueDate TEXT,
-            isRecurring INTEGER NOT NULL DEFAULT 0,
-            recurringRule TEXT,
-            parentId TEXT,
-            isArchived INTEGER NOT NULL DEFAULT 0,
-            deletedAt TEXT,
-            reminderMinutes INTEGER,
-            estimatedMinutes INTEGER,
-            isTemplate INTEGER NOT NULL DEFAULT 0,
-            createdAt TEXT NOT NULL,
-            updatedAt TEXT NOT NULL
-          )
-        ''');
-        await db.execute('''
-          CREATE INDEX idx_tasks_created ON tasks(createdAt)
-        ''');
-        await db.execute('''
-          CREATE INDEX idx_tasks_due ON tasks(dueDate)
-        ''');
-        await db.execute('''
-          CREATE TABLE categories (
-            uuid TEXT PRIMARY KEY,
-            name TEXT NOT NULL UNIQUE,
-            color INTEGER NOT NULL DEFAULT 4280100298,
-            icon TEXT,
-            sortOrder INTEGER NOT NULL DEFAULT 0
-          )
-        ''');
-        await db.execute('''
-          CREATE TABLE habits (
-            uuid TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            description TEXT,
-            color INTEGER NOT NULL DEFAULT 4279895538,
-            icon TEXT,
-            frequency INTEGER NOT NULL DEFAULT 0,
-            targetCount INTEGER NOT NULL DEFAULT 1,
-            currentStreak INTEGER NOT NULL DEFAULT 0,
-            longestStreak INTEGER NOT NULL DEFAULT 0,
-            sortOrder INTEGER NOT NULL DEFAULT 0,
-            isArchived INTEGER NOT NULL DEFAULT 0,
-            createdAt TEXT NOT NULL,
-            updatedAt TEXT NOT NULL
-          )
-        ''');
-        await db.execute('''
-          CREATE TABLE habit_logs (
-            uuid TEXT PRIMARY KEY,
-            habitId TEXT NOT NULL,
-            date TEXT NOT NULL,
-            isCompleted INTEGER NOT NULL DEFAULT 1,
-            note TEXT,
-            createdAt TEXT NOT NULL,
-            FOREIGN KEY (habitId) REFERENCES habits(uuid)
-          )
-        ''');
-        await db.execute('''
-          CREATE INDEX idx_habit_logs_habit ON habit_logs(habitId)
-        ''');
-        await db.execute('''
-          CREATE INDEX idx_habit_logs_date ON habit_logs(date)
-        ''');
-        await db.execute('''
-          CREATE TABLE notes (
-            uuid TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            content TEXT,
-            color INTEGER NOT NULL DEFAULT 4294955658,
-            isPinned INTEGER NOT NULL DEFAULT 0,
-            isArchived INTEGER NOT NULL DEFAULT 0,
-            createdAt TEXT NOT NULL,
-            updatedAt TEXT NOT NULL
-          )
-        ''');
-        await db.execute('''
-          CREATE TABLE focus_sessions (
-            uuid TEXT PRIMARY KEY,
-            taskId TEXT,
-            durationMinutes INTEGER NOT NULL DEFAULT 25,
-            isCompleted INTEGER NOT NULL DEFAULT 0,
-            startedAt TEXT,
-            endedAt TEXT,
-            createdAt TEXT NOT NULL
-          )
-        ''');
-        await db.execute('''
-          CREATE INDEX idx_focus_sessions_task ON focus_sessions(taskId)
-        ''');
-        await db.execute('''
-          CREATE TABLE tags (
-            uuid TEXT PRIMARY KEY,
-            name TEXT NOT NULL UNIQUE,
-            color INTEGER NOT NULL DEFAULT 4280100298
-          )
-        ''');
-        await db.execute('''
-          CREATE TABLE task_tags (
-            taskId TEXT NOT NULL,
-            tagId TEXT NOT NULL,
-            PRIMARY KEY (taskId, tagId),
-            FOREIGN KEY (taskId) REFERENCES tasks(uuid),
-            FOREIGN KEY (tagId) REFERENCES tags(uuid)
-          )
-        ''');
-        await db.execute('''
-          CREATE INDEX idx_task_tags_task ON task_tags(taskId)
-        ''');
-        await db.execute('''
-          CREATE INDEX idx_task_tags_tag ON task_tags(tagId)
-        ''');
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          await db
-              .execute('ALTER TABLE tasks ADD COLUMN reminderMinutes INTEGER');
-          await db
-              .execute('ALTER TABLE tasks ADD COLUMN estimatedMinutes INTEGER');
-          await db.execute('''
-            CREATE TABLE habits (
-              uuid TEXT PRIMARY KEY,
-              name TEXT NOT NULL,
-              description TEXT,
-              color INTEGER NOT NULL DEFAULT 4279895538,
-              icon TEXT,
-              frequency INTEGER NOT NULL DEFAULT 0,
-              targetCount INTEGER NOT NULL DEFAULT 1,
-              currentStreak INTEGER NOT NULL DEFAULT 0,
-              longestStreak INTEGER NOT NULL DEFAULT 0,
-              sortOrder INTEGER NOT NULL DEFAULT 0,
-              isArchived INTEGER NOT NULL DEFAULT 0,
-              createdAt TEXT NOT NULL,
-              updatedAt TEXT NOT NULL
-            )
-          ''');
-          await db.execute('''
-            CREATE TABLE habit_logs (
-              uuid TEXT PRIMARY KEY,
-              habitId TEXT NOT NULL,
-              date TEXT NOT NULL,
-              isCompleted INTEGER NOT NULL DEFAULT 1,
-              note TEXT,
-              createdAt TEXT NOT NULL,
-              FOREIGN KEY (habitId) REFERENCES habits(uuid)
-            )
-          ''');
-          await db.execute('''
-            CREATE INDEX idx_habit_logs_habit ON habit_logs(habitId)
-          ''');
-          await db.execute('''
-            CREATE INDEX idx_habit_logs_date ON habit_logs(date)
-          ''');
-          await db.execute('''
-            CREATE TABLE notes (
-              uuid TEXT PRIMARY KEY,
-              title TEXT NOT NULL,
-              content TEXT,
-              color INTEGER NOT NULL DEFAULT 4294955658,
-              isPinned INTEGER NOT NULL DEFAULT 0,
-              isArchived INTEGER NOT NULL DEFAULT 0,
-              createdAt TEXT NOT NULL,
-              updatedAt TEXT NOT NULL
-            )
-          ''');
-          await db.execute('''
-            CREATE TABLE focus_sessions (
-              uuid TEXT PRIMARY KEY,
-              taskId TEXT,
-              durationMinutes INTEGER NOT NULL DEFAULT 25,
-              isCompleted INTEGER NOT NULL DEFAULT 0,
-              startedAt TEXT,
-              endedAt TEXT,
-              createdAt TEXT NOT NULL
-            )
-          ''');
-          await db.execute('''
-            CREATE INDEX idx_focus_sessions_task ON focus_sessions(taskId)
-          ''');
-        }
-        if (oldVersion < 3) {
-          await db.execute('''
-            CREATE TABLE tags (
-              uuid TEXT PRIMARY KEY,
-              name TEXT NOT NULL UNIQUE,
-              color INTEGER NOT NULL DEFAULT 4280100298
-            )
-          ''');
-          await db.execute('''
-            CREATE TABLE task_tags (
-              taskId TEXT NOT NULL,
-              tagId TEXT NOT NULL,
-              PRIMARY KEY (taskId, tagId),
-              FOREIGN KEY (taskId) REFERENCES tasks(uuid),
-              FOREIGN KEY (tagId) REFERENCES tags(uuid)
-            )
-          ''');
-          await db.execute('''
-            CREATE INDEX idx_task_tags_task ON task_tags(taskId)
-          ''');
-          await db.execute('''
-            CREATE INDEX idx_task_tags_tag ON task_tags(tagId)
-          ''');
-        }
-        if (oldVersion < 4) {
-          await db.execute(
-              'ALTER TABLE tasks ADD COLUMN isTemplate INTEGER NOT NULL DEFAULT 0');
-        }
-      },
+    
+    sqlite.Database db;
+    if (kIsWeb) {
+      db = await databaseFactoryFfiWeb.openDatabase(fullPath);
+      await _ensureSchema(db);
+    } else {
+      db = await sqlite.openDatabase(
+        fullPath,
+        version: 4,
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+      );
+    }
+    _instance = db;
+  }
+
+  static Future<void> _ensureSchema(sqlite.Database db) async {
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'",
     );
+    if (tables.isEmpty) {
+      await _onCreate(db, 4);
+    }
+  }
+
+  static Future<void> _onCreate(sqlite.Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE tasks (
+        uuid TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        isCompleted INTEGER NOT NULL DEFAULT 0,
+        priority INTEGER NOT NULL DEFAULT 2,
+        categoryId TEXT,
+        dueDate TEXT,
+        isRecurring INTEGER NOT NULL DEFAULT 0,
+        recurringRule TEXT,
+        parentId TEXT,
+        isArchived INTEGER NOT NULL DEFAULT 0,
+        deletedAt TEXT,
+        reminderMinutes INTEGER,
+        estimatedMinutes INTEGER,
+        isTemplate INTEGER NOT NULL DEFAULT 0,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      )
+    ''');
+    await db.execute('CREATE INDEX idx_tasks_created ON tasks(createdAt)');
+    await db.execute('CREATE INDEX idx_tasks_due ON tasks(dueDate)');
+    await db.execute('''
+      CREATE TABLE categories (
+        uuid TEXT PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        color INTEGER NOT NULL DEFAULT 4280100298,
+        icon TEXT,
+        sortOrder INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE habits (
+        uuid TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        color INTEGER NOT NULL DEFAULT 4279895538,
+        icon TEXT,
+        frequency INTEGER NOT NULL DEFAULT 0,
+        targetCount INTEGER NOT NULL DEFAULT 1,
+        currentStreak INTEGER NOT NULL DEFAULT 0,
+        longestStreak INTEGER NOT NULL DEFAULT 0,
+        sortOrder INTEGER NOT NULL DEFAULT 0,
+        isArchived INTEGER NOT NULL DEFAULT 0,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE habit_logs (
+        uuid TEXT PRIMARY KEY,
+        habitId TEXT NOT NULL,
+        date TEXT NOT NULL,
+        isCompleted INTEGER NOT NULL DEFAULT 1,
+        note TEXT,
+        createdAt TEXT NOT NULL,
+        FOREIGN KEY (habitId) REFERENCES habits(uuid)
+      )
+    ''');
+    await db.execute('CREATE INDEX idx_habit_logs_habit ON habit_logs(habitId)');
+    await db.execute('CREATE INDEX idx_habit_logs_date ON habit_logs(date)');
+    await db.execute('''
+      CREATE TABLE notes (
+        uuid TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        content TEXT,
+        color INTEGER NOT NULL DEFAULT 4294955658,
+        isPinned INTEGER NOT NULL DEFAULT 0,
+        isArchived INTEGER NOT NULL DEFAULT 0,
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE focus_sessions (
+        uuid TEXT PRIMARY KEY,
+        taskId TEXT,
+        durationMinutes INTEGER NOT NULL DEFAULT 25,
+        isCompleted INTEGER NOT NULL DEFAULT 0,
+        startedAt TEXT,
+        endedAt TEXT,
+        createdAt TEXT NOT NULL
+      )
+    ''');
+    await db.execute(
+        'CREATE INDEX idx_focus_sessions_task ON focus_sessions(taskId)');
+    await db.execute('''
+      CREATE TABLE tags (
+        uuid TEXT PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        color INTEGER NOT NULL DEFAULT 4280100298
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE task_tags (
+        taskId TEXT NOT NULL,
+        tagId TEXT NOT NULL,
+        PRIMARY KEY (taskId, tagId),
+        FOREIGN KEY (taskId) REFERENCES tasks(uuid),
+        FOREIGN KEY (tagId) REFERENCES tags(uuid)
+      )
+    ''');
+    await db.execute('CREATE INDEX idx_task_tags_task ON task_tags(taskId)');
+    await db.execute('CREATE INDEX idx_task_tags_tag ON task_tags(tagId)');
+  }
+
+  static Future<void> _onUpgrade(
+      sqlite.Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db
+          .execute('ALTER TABLE tasks ADD COLUMN reminderMinutes INTEGER');
+      await db
+          .execute('ALTER TABLE tasks ADD COLUMN estimatedMinutes INTEGER');
+      await db.execute('''
+        CREATE TABLE habits (
+          uuid TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          color INTEGER NOT NULL DEFAULT 4279895538,
+          icon TEXT,
+          frequency INTEGER NOT NULL DEFAULT 0,
+          targetCount INTEGER NOT NULL DEFAULT 1,
+          currentStreak INTEGER NOT NULL DEFAULT 0,
+          longestStreak INTEGER NOT NULL DEFAULT 0,
+          sortOrder INTEGER NOT NULL DEFAULT 0,
+          isArchived INTEGER NOT NULL DEFAULT 0,
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE habit_logs (
+          uuid TEXT PRIMARY KEY,
+          habitId TEXT NOT NULL,
+          date TEXT NOT NULL,
+          isCompleted INTEGER NOT NULL DEFAULT 1,
+          note TEXT,
+          createdAt TEXT NOT NULL,
+          FOREIGN KEY (habitId) REFERENCES habits(uuid)
+        )
+      ''');
+      await db.execute(
+          'CREATE INDEX idx_habit_logs_habit ON habit_logs(habitId)');
+      await db.execute('CREATE INDEX idx_habit_logs_date ON habit_logs(date)');
+      await db.execute('''
+        CREATE TABLE notes (
+          uuid TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          content TEXT,
+          color INTEGER NOT NULL DEFAULT 4294955658,
+          isPinned INTEGER NOT NULL DEFAULT 0,
+          isArchived INTEGER NOT NULL DEFAULT 0,
+          createdAt TEXT NOT NULL,
+          updatedAt TEXT NOT NULL
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE focus_sessions (
+          uuid TEXT PRIMARY KEY,
+          taskId TEXT,
+          durationMinutes INTEGER NOT NULL DEFAULT 25,
+          isCompleted INTEGER NOT NULL DEFAULT 0,
+          startedAt TEXT,
+          endedAt TEXT,
+          createdAt TEXT NOT NULL
+        )
+      ''');
+      await db.execute(
+          'CREATE INDEX idx_focus_sessions_task ON focus_sessions(taskId)');
+    }
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE TABLE tags (
+          uuid TEXT PRIMARY KEY,
+          name TEXT NOT NULL UNIQUE,
+          color INTEGER NOT NULL DEFAULT 4280100298
+        )
+      ''');
+      await db.execute('''
+        CREATE TABLE task_tags (
+          taskId TEXT NOT NULL,
+          tagId TEXT NOT NULL,
+          PRIMARY KEY (taskId, tagId),
+          FOREIGN KEY (taskId) REFERENCES tasks(uuid),
+          FOREIGN KEY (tagId) REFERENCES tags(uuid)
+        )
+      ''');
+      await db.execute('CREATE INDEX idx_task_tags_task ON task_tags(taskId)');
+      await db.execute('CREATE INDEX idx_task_tags_tag ON task_tags(tagId)');
+    }
+    if (oldVersion < 4) {
+      await db.execute(
+          'ALTER TABLE tasks ADD COLUMN isTemplate INTEGER NOT NULL DEFAULT 0');
+    }
   }
 
   static Future<List<Task>> getAllTasks() async {
