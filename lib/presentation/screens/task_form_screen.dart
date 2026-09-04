@@ -43,11 +43,58 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
   DateTime? _dueDate;
   RecurrenceRule? _recurrence;
   int _reminderMinutes = 30;
-  final _estimatedController = TextEditingController();
   bool _isLoading = false;
   List<Task> _subtasks = [];
   String? _parentTaskId;
   List<String> _selectedTagIds = [];
+
+  static const List<int> _reminderOptions = [
+    5, 10, 15, 20, 30, 45, 60, 120, 240, 1440,
+  ];
+
+  String _formatReminder(int minutes) {
+    if (minutes < 60) return '$minutes menit sebelumnya';
+    if (minutes == 60) return '1 jam sebelumnya';
+    if (minutes < 1440) return '${minutes ~/ 60} jam sebelumnya';
+    return '${minutes ~/ 1440} hari sebelumnya';
+  }
+
+  Future<void> _showCustomReminderDialog() async {
+    final controller = TextEditingController();
+    final result = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Custom Pengingat'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            hintText: 'Menit',
+            suffixText: 'menit sebelum deadline',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              final val = int.tryParse(controller.text);
+              if (val != null && val > 0) {
+                Navigator.pop(context, val);
+              }
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+    if (result != null && result > 0) {
+      setState(() => _reminderMinutes = result);
+    }
+  }
 
   bool get _isEditing => widget.taskId != null;
 
@@ -65,7 +112,6 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
     _titleController.dispose();
     _descriptionController.dispose();
     _subtaskController.dispose();
-    _estimatedController.dispose();
     super.dispose();
   }
 
@@ -82,7 +128,6 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
         _recurrence = RecurrenceRule.fromRrule(task.recurringRule);
         _parentTaskId = task.parentId;
         _reminderMinutes = task.reminderMinutes ?? 30;
-        _estimatedController.text = task.estimatedMinutes?.toString() ?? '';
       });
       final tagIds =
           await ref.read(tagRepositoryProvider).getTaskTags(widget.taskId!);
@@ -120,7 +165,6 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
             isRecurring: _recurrence != null,
             recurringRule: _recurrence?.toRrule(),
             reminderMinutes: _reminderMinutes,
-            estimatedMinutes: int.tryParse(_estimatedController.text),
           ));
           await tagRepo.setTaskTags(widget.taskId!, _selectedTagIds);
         }
@@ -136,7 +180,6 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
           isRecurring: _recurrence != null,
           recurringRule: _recurrence?.toRrule(),
           reminderMinutes: _reminderMinutes,
-          estimatedMinutes: int.tryParse(_estimatedController.text),
         );
         await tagRepo.setTaskTags(task.uuid, _selectedTagIds);
       }
@@ -148,14 +191,39 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
-    final picked = await showDatePicker(
+    final pickedDate = await showDatePicker(
       context: context,
       initialDate: _dueDate ?? now,
       firstDate: now.subtract(const Duration(days: 365)),
       lastDate: now.add(const Duration(days: 365 * 5)),
     );
-    if (picked != null) {
-      setState(() => _dueDate = picked);
+    if (pickedDate != null && mounted) {
+      final currentTime = _dueDate ?? now;
+      final pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(currentTime),
+      );
+      if (pickedTime != null) {
+        setState(() {
+          _dueDate = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            pickedTime.hour,
+            pickedTime.minute,
+          );
+        });
+      } else {
+        setState(() {
+          _dueDate = DateTime(
+            pickedDate.year,
+            pickedDate.month,
+            pickedDate.day,
+            currentTime.hour,
+            currentTime.minute,
+          );
+        });
+      }
     }
   }
 
@@ -403,7 +471,7 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                             ),
                             child: Text(
                               _dueDate != null
-                                  ? '${_dueDate!.day}/${_dueDate!.month}/${_dueDate!.year}'
+                                  ? '${_dueDate!.day}/${_dueDate!.month}/${_dueDate!.year} ${_dueDate!.hour.toString().padLeft(2, '0')}:${_dueDate!.minute.toString().padLeft(2, '0')}'
                                   : S.taskPilihTanggal,
                             ),
                           ),
@@ -413,49 +481,49 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                       _fieldRow(
                         icon: Icons.notifications_outlined,
                         label: 'Pengingat',
-                        child: DropdownButtonFormField<int>(
-                          value: _reminderMinutes,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.circular(RadiusTokens.sm),
+                        child: Column(
+                          children: [
+                            DropdownButtonFormField<int>(
+                              value: _reminderOptions.contains(_reminderMinutes) ? _reminderMinutes : -1,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(RadiusTokens.sm),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
+                              ),
+                              items: [
+                                const DropdownMenuItem(
+                                    value: null,
+                                    child: Text('Pilih...')),
+                                ..._reminderOptions.map((m) => DropdownMenuItem(
+                                      value: m,
+                                      child: Text(_formatReminder(m)),
+                                    )),
+                                const DropdownMenuItem(
+                                    value: -1,
+                                    child: Text('Custom...')),
+                              ],
+                              onChanged: (v) {
+                                if (v == -1) {
+                                  _showCustomReminderDialog();
+                                } else if (v != null) {
+                                  setState(() => _reminderMinutes = v);
+                                }
+                              },
                             ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 14),
-                          ),
-                          items: const [
-                            DropdownMenuItem(
-                                value: 5, child: Text('5 menit sebelumnya')),
-                            DropdownMenuItem(
-                                value: 15, child: Text('15 menit sebelumnya')),
-                            DropdownMenuItem(
-                                value: 30, child: Text('30 menit sebelumnya')),
-                            DropdownMenuItem(
-                                value: 60, child: Text('1 jam sebelumnya')),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Saat ini: ${_formatReminder(_reminderMinutes)}',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
                           ],
-                          onChanged: (v) {
-                            if (v != null) setState(() => _reminderMinutes = v);
-                          },
                         ),
                       ),
                       const SizedBox(height: Spacing.md),
-                      _fieldRow(
-                        icon: Icons.timer_outlined,
-                        label: 'Estimasi Waktu',
-                        child: TextFormField(
-                          controller: _estimatedController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            hintText: 'Menit',
-                            border: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.circular(RadiusTokens.sm),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 14),
-                          ),
-                        ),
-                      ),
                       if (_isEditing) ...[
                         const SizedBox(height: Spacing.lg),
                         _sectionDivider(),
