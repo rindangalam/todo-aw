@@ -1,5 +1,6 @@
 ﻿import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
@@ -23,15 +24,37 @@ import 'data/repositories/task_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Intl.defaultLocale = Platform.localeName;
-  await initializeDateFormatting();
-  await AppDatabase.init();
-  await NotificationService.init();
-  await SharedPreferences.getInstance();
-  await TaskRepository().purgeOldTrash();
 
-  HomeWidget.setAppGroupId(WidgetBridge.groupId);
-  HomeWidget.widgetClicked.listen((_) {});
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  if (!kIsWeb) {
+    Intl.defaultLocale = Platform.localeName;
+  }
+  await initializeDateFormatting();
+
+  try {
+    await AppDatabase.init();
+  } catch (e) {
+    // Database init failed — app will show error state
+  }
+
+  try {
+    await NotificationService.init();
+  } catch (_) {}
+
+  try {
+    await SharedPreferences.getInstance();
+  } catch (_) {}
+
+  try {
+    await TaskRepository().purgeOldTrash();
+  } catch (_) {}
+
+  if (!kIsWeb) {
+    try {
+      HomeWidget.setAppGroupId(WidgetBridge.groupId);
+      HomeWidget.widgetClicked.listen((_) {});
+    } catch (_) {}
+  }
 
   final introSeen = await TourService.isIntroSeen();
   final initialLocation = introSeen ? '/' : '/intro';
@@ -44,7 +67,7 @@ void main() async {
     ),
   );
 
-  if (Platform.isAndroid) {
+  if (!kIsWeb && Platform.isAndroid) {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
         const channel = MethodChannel('com.todoaw.todoaw/widget_action');
@@ -73,6 +96,17 @@ class TodoawApp extends ConsumerWidget {
       theme: LightTheme.theme(accent: accentColor),
       darkTheme: DarkTheme.theme(accent: accentColor),
       themeMode: themeMode,
+      builder: (context, child) {
+        final brightness = Theme.of(context).brightness;
+        final isDark = brightness == Brightness.dark;
+        SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          systemNavigationBarColor: Colors.transparent,
+          systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        ));
+        return child!;
+      },
       routerConfig: router,
     );
   }
