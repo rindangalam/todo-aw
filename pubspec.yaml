@@ -4,7 +4,7 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=2.18.0 <3.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -19,17 +19,18 @@ dependencies:
 
   # Database
   sqflite: ^2.2.0
+  sqflite_common_ffi_web: ^0.4.0
 
   # Notifications
-  flutter_local_notifications: ^13.0.0
+  flutter_local_notifications: ^18.0.0
 
   # Fonts
-  google_fonts: ^4.0.0
+  google_fonts: ^6.0.0
 
   # Utilities
   uuid: ^3.0.0
   intl: ^0.18.0
-  path_provider: ^2.0.0
+  path_provider: ^2.1.0
   path: ^1.8.0
   shared_preferences: ^2.0.0
 
@@ -38,8 +39,8 @@ dependencies:
   # Home screen widget
   home_widget: ^0.2.0
   tutorial_coach_mark: 1.2.2
-  file_picker: ^5.3.0
-  excel: ^2.1.0
+  file_picker: ^8.0.0
+  excel: ^4.0.6
   # (export via file save — share_plus removed due to AGP incompatibility)
 
 dev_dependencies:
@@ -54,7 +55,7 @@ dev_dependencies:
   image: ^3.0.0
 
 dependency_overrides:
-  collection: 1.17.0
+  archive: 3.6.1
 
 flutter_icons:
   android: true

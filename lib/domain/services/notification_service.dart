@@ -2,6 +2,8 @@
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/foundation.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz;
 
 class NotificationService {
   static FlutterLocalNotificationsPlugin _plugin =
@@ -11,6 +13,7 @@ class NotificationService {
   static set plugin(FlutterLocalNotificationsPlugin p) => _plugin = p;
 
   static Future<void> init() async {
+    tz.initializeTimeZones();
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
@@ -49,12 +52,15 @@ class NotificationService {
     if (delay.isNegative || delay.inSeconds < 0) return;
 
     try {
-      await _plugin.schedule(
+      final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
+      await _plugin.zonedSchedule(
         (id.hashCode & 0x7FFFFFFF),
         title,
         body,
-        scheduledDate,
+        tzDate,
         details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       );
     } catch (_) {}
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'tokens.dart';
 import 'typography.dart';
@@ -18,8 +19,14 @@ class DarkTheme {
           scrolledUnderElevation: 1,
           backgroundColor: ColorTokens.darkBackground,
           foregroundColor: Color(0xFFE5E7EB),
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.light,
+            systemNavigationBarColor: Colors.transparent,
+            systemNavigationBarIconBrightness: Brightness.light,
+          ),
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           elevation: 0,
           color: ColorTokens.darkSurface,
           shape: RoundedRectangleBorder(
@@ -63,8 +70,8 @@ class DarkTheme {
           elevation: 0,
           backgroundColor: ColorTokens.darkSurface,
           indicatorColor: accent.withOpacity(0.15),
-          labelTextStyle: MaterialStateProperty.resolveWith((states) {
-            if (states.contains(MaterialState.selected)) {
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
               return TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
@@ -80,8 +87,8 @@ class DarkTheme {
         ),
         checkboxTheme: CheckboxThemeData(
           shape: const CircleBorder(),
-          fillColor: MaterialStateProperty.resolveWith((states) {
-            if (states.contains(MaterialState.selected)) {
+          fillColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
               return accent;
             }
             return Colors.transparent;

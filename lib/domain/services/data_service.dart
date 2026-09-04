@@ -70,7 +70,7 @@ class DataService {
         sheet.cell(CellIndex.indexByColumnRow(
           columnIndex: col,
           rowIndex: 0,
-        )).value = headers[col];
+        )).value = TextCellValue(headers[col]);
       }
 
       for (var r = 0; r < rows.length; r++) {
@@ -80,7 +80,7 @@ class DataService {
           sheet.cell(CellIndex.indexByColumnRow(
             columnIndex: col,
             rowIndex: r + 1,
-          )).value = val;
+          )).value = val != null ? TextCellValue(val.toString()) : null;
         }
       }
     }
