@@ -14,6 +14,7 @@ import 'screens/habits_screen.dart';
 import 'screens/notes_screen.dart';
 import 'screens/trash_screen.dart';
 import 'screens/archive_screen.dart';
+import 'screens/missed_notifications_screen.dart';
 import 'widgets/intro_slides.dart';
 
 import '../core/l10n/strings.dart';
@@ -158,6 +159,12 @@ GoRouter appRouter({String initialLocation = '/splash'}) {
         path: '/focus',
         parentNavigatorKey: _rootNavigatorKey,
         pageBuilder: (context, state) => _slideFromRight(const FocusScreen()),
+      ),
+      GoRoute(
+        path: '/missed-notifications',
+        parentNavigatorKey: _rootNavigatorKey,
+        pageBuilder: (context, state) =>
+            _slideFromRight(const MissedNotificationsScreen()),
       ),
     ],
   );

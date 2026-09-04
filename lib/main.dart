@@ -39,7 +39,9 @@ void main() async {
 
   try {
     await NotificationService.init();
-  } catch (_) {}
+  } catch (e) {
+    debugPrint('[Main] Notification init error: $e');
+  }
 
   try {
     await SharedPreferences.getInstance();

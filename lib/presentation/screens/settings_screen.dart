@@ -98,6 +98,12 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push('/archive'),
           ),
           ListTile(
+            leading: const Icon(Icons.notifications_off_outlined),
+            title: const Text('Notifikasi Terlewat'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/missed-notifications'),
+          ),
+          ListTile(
             leading: const Icon(Icons.delete_outline),
             title: const Text(S.settingsTempatSampah),
             trailing: const Icon(Icons.chevron_right),
