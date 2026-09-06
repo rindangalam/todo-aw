@@ -62,6 +62,9 @@ class NotificationService {
       visibility: NotificationVisibility.public,
       autoCancel: true,
       ongoing: false,
+      icon: '@mipmap/ic_launcher',
+      styleInformation: DefaultStyleInformation(true, true),
+      ticker: 'Todoaw',
     );
     const iosDetails = DarwinNotificationDetails();
     const details = NotificationDetails(
@@ -117,6 +120,9 @@ class NotificationService {
       autoCancel: true,
       ongoing: false,
       largeIcon: null,
+      icon: '@mipmap/ic_launcher',
+      styleInformation: DefaultStyleInformation(true, true),
+      ticker: 'Todoaw',
     );
     const iosDetails = DarwinNotificationDetails();
     const details = NotificationDetails(
