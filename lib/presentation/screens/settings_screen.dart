@@ -1,11 +1,14 @@
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/l10n/strings.dart';
 import '../../data/database.dart';
+import '../../domain/services/background_service.dart';
 import '../../providers/data_service_provider.dart';
 import '../../providers/habit_provider.dart';
 import '../../providers/note_provider.dart';
@@ -75,6 +78,25 @@ class SettingsScreen extends ConsumerWidget {
           ),
           _AccentColorTile(),
           const Divider(height: 1),
+          const _SectionHeader(title: 'Notifikasi'),
+          ListTile(
+            leading: const Icon(Icons.notifications_active_outlined),
+            title: const Text('Pastikan Notifikasi Aktif'),
+            subtitle: const Text('Buka pengaturan notifikasi HP Anda'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () async {
+              await AwesomeNotifications().requestPermissionToSendNotifications();
+            },
+          ),
+          _BackgroundServiceTile(),
+          ListTile(
+            leading: const Icon(Icons.battery_saver_outlined),
+            title: const Text('Pengaturan Baterai (OPPO)'),
+            subtitle: const Text('Nonaktifkan pengoptimalan baterai untuk Todoaw'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _openBatterySettings(context),
+          ),
+          const Divider(height: 1),
           const _SectionHeader(title: S.settingsStiker),
           const _StickerTile(),
           const Divider(height: 1),
@@ -97,12 +119,7 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/archive'),
           ),
-          ListTile(
-            leading: const Icon(Icons.notifications_off_outlined),
-            title: const Text('Notifikasi Terlewat'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/missed-notifications'),
-          ),
+
           ListTile(
             leading: const Icon(Icons.delete_outline),
             title: const Text(S.settingsTempatSampah),
@@ -170,6 +187,38 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _openBatterySettings(BuildContext context) async {
+    try {
+      // Try OPPO Auto-Launch settings first
+      const channel = MethodChannel('com.todoaw.todoaw/battery');
+      await channel.invokeMethod('openBatterySettings');
+    } catch (_) {
+      // Fallback: show dialog with instructions
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Pengaturan Baterai'),
+            content: const Text(
+              'Untuk memastikan notifikasi muncul meskipun aplikasi ditutup:\n\n'
+              '1. Buka Pengaturan > Aplikasi > Todoaw\n'
+              '2. Aktifkan "Mulai otomatis" (Auto-Launch)\n'
+              '3. Buka Pengaturan > Baterai > Pengoptimalan Baterai\n'
+              '4. Cari Todoaw, pilih "Jangan optimalkan"\n\n'
+              'Ini penting agar pengingat tetap muncul saat aplikasi tidak aktif.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Mengerti'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
   }
 
   Future<String> _restoreData(BuildContext context, WidgetRef ref) async {
@@ -695,6 +744,55 @@ class _AccentColorTile extends ConsumerWidget {
           WidgetBridge.updateWidget();
         }
       },
+    );
+  }
+}
+
+class _BackgroundServiceTile extends StatefulWidget {
+  @override
+  State<_BackgroundServiceTile> createState() => _BackgroundServiceTileState();
+}
+
+class _BackgroundServiceTileState extends State<_BackgroundServiceTile> {
+  bool _isRunning = false;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkStatus();
+  }
+
+  Future<void> _checkStatus() async {
+    final running = await BackgroundNotificationService.isRunning();
+    if (!mounted) return;
+    setState(() {
+      _isRunning = running;
+      _loading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SwitchListTile(
+      secondary: const Icon(Icons.timer_outlined),
+      title: const Text('Layanan Latar Belakang'),
+      subtitle: Text(
+        _isRunning
+            ? 'Aktif — notifikasi on-time'
+            : 'Nonaktif — notifikasi mungkin delay',
+      ),
+      value: _isRunning,
+      onChanged: _loading
+          ? null
+          : (value) async {
+              if (value) {
+                await BackgroundNotificationService.init();
+              } else {
+                await BackgroundNotificationService.stop();
+              }
+              await _checkStatus();
+            },
     );
   }
 }
