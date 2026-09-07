@@ -98,11 +98,10 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
       dueDate: dueDate,
       isRecurring: isRecurring,
       recurringRule: recurringRule,
+      reminderMinutes: reminderMinutes,
     );
     if (task.dueDate != null) {
-      try {
-        _scheduleNotification(task.copyWith(reminderMinutes: reminderMinutes));
-      } catch (_) {}
+      _scheduleNotification(task);
     }
     _ref.invalidate(statsProvider);
     await load();

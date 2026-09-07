@@ -31,6 +31,7 @@ class TaskRepository {
     bool isRecurring = false,
     String? recurringRule,
     String? parentId,
+    int? reminderMinutes,
   }) async {
     final now = DateTime.now();
     final task = Task(
@@ -43,6 +44,7 @@ class TaskRepository {
       isRecurring: isRecurring,
       recurringRule: recurringRule,
       parentId: parentId,
+      reminderMinutes: reminderMinutes,
       createdAt: now,
       updatedAt: now,
     );
@@ -71,6 +73,7 @@ class TaskRepository {
       dueDate: task.dueDate,
       isRecurring: task.isRecurring,
       recurringRule: task.recurringRule,
+      reminderMinutes: task.reminderMinutes,
       createdAt: now,
       updatedAt: now,
     );
@@ -104,6 +107,7 @@ class TaskRepository {
         recurringRule: task.recurringRule,
         parentId: task.parentId,
         isArchived: task.isArchived,
+        reminderMinutes: task.reminderMinutes,
         createdAt: task.createdAt,
         updatedAt: DateTime.now(),
       ));
