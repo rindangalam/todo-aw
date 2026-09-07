@@ -18,6 +18,7 @@ import '../widgets/error_state.dart';
 import '../../providers/task_list_provider.dart';
 import '../../services/tour_service.dart';
 import '../../services/widget_action.dart';
+import '../widgets/note_form_sheet.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/home_hero.dart';
@@ -66,6 +67,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         break;
       case 'open_calendar':
         context.go('/calendar');
+        break;
+      case 'edit_note':
+        final noteUuid = PendingWidgetAction.noteUuid;
+        PendingWidgetAction.noteUuid = null;
+        if (noteUuid != null) showNoteFormSheet(context, noteId: noteUuid);
+        break;
+      case 'new_note':
+        showNoteFormSheet(context);
+        break;
+      case 'open_notes':
+        context.go('/notes');
         break;
     }
   }

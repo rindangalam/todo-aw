@@ -16,9 +16,43 @@ import java.io.FileOutputStream
 class MainActivity : FlutterActivity() {
     private val SAVE_CHANNEL = "com.todoaw.todoaw/savefile"
     private val ACTION_CHANNEL = "com.todoaw.todoaw/widget_action"
+    private val BATTERY_CHANNEL = "com.todoaw.todoaw/battery"
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        // Battery settings channel — opens OPPO Auto-Launch or battery optimization
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BATTERY_CHANNEL).setMethodCallHandler { call, result ->
+            if (call.method == "openBatterySettings") {
+                try {
+                    val intents = listOf(
+                        // OPPO Auto-Launch (modern ColorOS)
+                        Intent().setClassName("com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppListActivity"),
+                        // OPPO Auto-Launch (older ColorOS)
+                        Intent().setClassName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"),
+                        Intent().setClassName("com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity"),
+                        // OPPO Battery settings
+                        Intent().setClassName("com.coloros.oppoguardelf", "com.coloros.powermanager.fuelgauges.PowerConsumptionActivity"),
+                        // Generic battery optimization
+                        Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                    )
+                    var opened = false
+                    for (intent in intents) {
+                        if (intent.resolveActivity(packageManager) != null) {
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            startActivity(intent)
+                            opened = true
+                            break
+                        }
+                    }
+                    result.success(opened)
+                } catch (e: Exception) {
+                    result.error("OPEN_FAILED", e.message, null)
+                }
+            } else {
+                result.notImplemented()
+            }
+        }
 
         // Save file channel (existing)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SAVE_CHANNEL).setMethodCallHandler { call, result ->
@@ -44,10 +78,14 @@ class MainActivity : FlutterActivity() {
             if (call.method == "getPendingAction") {
                 val action = intent?.getStringExtra("action") ?: ""
                 val taskUuid = intent?.getStringExtra("task_uuid") ?: ""
+                val noteUuid = intent?.getStringExtra("note_uuid") ?: ""
                 if (action.isNotEmpty()) {
-                    result.success(mapOf("action" to action, "taskUuid" to taskUuid))
+                    val data = mutableMapOf("action" to action, "taskUuid" to taskUuid)
+                    if (noteUuid.isNotEmpty()) data["noteUuid"] = noteUuid
+                    result.success(data)
                     intent?.removeExtra("action")
                     intent?.removeExtra("task_uuid")
+                    intent?.removeExtra("note_uuid")
                 } else {
                     result.success(null)
                 }
