@@ -1,8 +1,5 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/models/task.dart';
 import '../data/repositories/task_repository.dart';
@@ -42,7 +39,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _repository.getActive());
     _scheduleAllNotifications();
-    _checkMissedNotifications();
     WidgetBridge.updateWidget();
   }
 
@@ -100,9 +96,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
       recurringRule: recurringRule,
       reminderMinutes: reminderMinutes,
     );
-    if (task.dueDate != null) {
-      _scheduleNotification(task);
-    }
     _ref.invalidate(statsProvider);
     await load();
     return task;
@@ -199,9 +192,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     final template = await _repository.getById(templateId);
     if (template == null) throw Exception('Template not found');
     final task = await _repository.createFromTask(template);
-    if (task.dueDate != null) {
-      _scheduleNotification(task);
-    }
     _ref.invalidate(statsProvider);
     await load();
     return task;
@@ -250,45 +240,5 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     );
   }
 
-  Future<void> _checkMissedNotifications() async {
-    final now = DateTime.now();
-    final tasks = state.value ?? [];
-    final prefs = await SharedPreferences.getInstance();
-    final missed = <Map<String, dynamic>>[];
 
-    for (final task in tasks) {
-      if (task.isCompleted || task.dueDate == null) continue;
-
-      final minutes = task.reminderMinutes ?? 30;
-      final remindAt = task.dueDate!.subtract(Duration(minutes: minutes));
-
-      if (remindAt.isBefore(now) && task.dueDate!.isAfter(now)) {
-        missed.add({
-          'uuid': task.uuid,
-          'title': task.title,
-          'priority': task.priority.name,
-          'dueDate': task.dueDate!.toIso8601String(),
-          'remindAt': remindAt.toIso8601String(),
-        });
-      }
-    }
-
-    if (missed.isNotEmpty) {
-      await prefs.setString('missed_notifications', jsonEncode(missed));
-    } else {
-      await prefs.remove('missed_notifications');
-    }
-  }
-
-  Future<List<Map<String, dynamic>>> getMissedNotifications() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString('missed_notifications');
-    if (raw == null) return [];
-    return List<Map<String, dynamic>>.from(jsonDecode(raw));
-  }
-
-  Future<void> clearMissedNotifications() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('missed_notifications');
-  }
 }

@@ -1,48 +1,79 @@
-// ignore_for_file: deprecated_member_use
+import 'dart:async';
+import 'dart:convert';
 
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/foundation.dart';
-import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:shared_preferences/shared_preferences.dart';
+
+@pragma('vm:entry-point')
+Future<void> onNotificationCreated(ReceivedNotification notification) async {
+  debugPrint('[AwesomeNotif] Created: ${notification.title}');
+}
+
+@pragma('vm:entry-point')
+Future<void> onNotificationDisplayed(ReceivedNotification notification) async {
+  debugPrint('[AwesomeNotif] Displayed: ${notification.title}');
+}
+
+@pragma('vm:entry-point')
+Future<void> onNotificationAction(ReceivedAction action) async {
+  debugPrint('[AwesomeNotif] Action tapped: ${action.id} ${action.payload}');
+}
 
 class NotificationService {
-  static FlutterLocalNotificationsPlugin _plugin =
-      FlutterLocalNotificationsPlugin();
+  static Function(String?)? _onNotificationTap;
+  static Timer? _pollTimer;
+  static final List<Map<String, dynamic>> _pendingNotifications = [];
 
-  @visibleForTesting
-  static set plugin(FlutterLocalNotificationsPlugin p) => _plugin = p;
+  static Future<void> init({Function(String?)? onNotificationTap}) async {
+    _onNotificationTap = onNotificationTap;
 
-  static Future<void> init() async {
-    tz.initializeTimeZones();
-    try {
-      tz.setLocalLocation(tz.getLocation('Asia/Jakarta'));
-    } catch (_) {}
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+    await AwesomeNotifications().initialize(
+      null,
+      [
+        NotificationChannel(
+          channelKey: 'task_reminders',
+          channelName: 'Task Reminders',
+          channelDescription: 'Reminders for your tasks',
+          importance: NotificationImportance.High,
+          defaultPrivacy: NotificationPrivacy.Public,
+          defaultRingtoneType: DefaultRingtoneType.Notification,
+          enableVibration: true,
+          enableLights: true,
+          playSound: true,
+          onlyAlertOnce: false,
+        ),
+      ],
+      debug: kDebugMode,
     );
-    const settings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
-    await _plugin.initialize(settings);
 
-    // Request notification permission for Android 13+
-    final androidPlugin =
-        _plugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    if (androidPlugin != null) {
-      final granted = await androidPlugin.requestNotificationsPermission();
+    await AwesomeNotifications().setListeners(
+      onNotificationCreatedMethod: onNotificationCreated,
+      onNotificationDisplayedMethod: onNotificationDisplayed,
+      onActionReceivedMethod: onNotificationAction,
+    );
+
+    final isAllowed = await AwesomeNotifications().isNotificationAllowed();
+    if (!isAllowed) {
+      final granted = await AwesomeNotifications().requestPermissionToSendNotifications();
       debugPrint('[NotificationService] Permission granted: $granted');
-      await androidPlugin.requestExactAlarmsPermission();
     }
 
-    // Check pending notifications
-    final pending = await _plugin.pendingNotificationRequests();
-    debugPrint('[NotificationService] Pending: ${pending.length}');
+    // Handle notification tap when app was killed
+    final initialAction = await AwesomeNotifications().getInitialNotificationAction();
+    if (initialAction != null) {
+      debugPrint('[NotificationService] Initial action: ${initialAction.id}');
+      _onNotificationTap?.call(null);
+    }
+
+    // Restore pending from storage
+    await _restorePending();
+
+    // Poll every 15 seconds — fire immediately when time is up
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) => _poll());
+
+    debugPrint('[NotificationService] Init done (awesome_notifications + polling)');
   }
 
   static Future<void> scheduleNotification({
@@ -51,89 +82,125 @@ class NotificationService {
     required String body,
     required DateTime scheduledDate,
   }) async {
-    const androidDetails = AndroidNotificationDetails(
-      'task_reminders',
-      'Task Reminders',
-      channelDescription: 'Reminders for your tasks',
-      importance: Importance.high,
-      priority: Priority.high,
-      playSound: true,
-      enableVibration: true,
-      visibility: NotificationVisibility.public,
-      autoCancel: true,
-      ongoing: false,
-      icon: '@mipmap/ic_launcher',
-      styleInformation: DefaultStyleInformation(true, true),
-      ticker: 'Todoaw',
-    );
-    const iosDetails = DarwinNotificationDetails();
-    const details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
     final now = DateTime.now();
-    final delay = scheduledDate.difference(now);
-    if (delay.isNegative || delay.inSeconds < 0) return;
+    if (scheduledDate.isBefore(now)) return;
 
+    final notifId = id.hashCode & 0x7FFFFFFF;
+
+    // Store for foreground polling (instant fire when time is up)
+    _pendingNotifications.removeWhere((n) => n['id'] == id);
+    _pendingNotifications.add({
+      'id': id,
+      'notifId': notifId,
+      'title': title,
+      'body': body,
+      'scheduledDate': scheduledDate.toIso8601String(),
+    });
+    await _savePending();
+
+    // Also schedule via WorkManager (survives app kill/reboot)
     try {
-      final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
-      debugPrint('[NotificationService] Scheduling: $title at $tzDate');
-      await _plugin.zonedSchedule(
-        (id.hashCode & 0x7FFFFFFF),
-        title,
-        body,
-        tzDate,
-        details,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      await AwesomeNotifications().createNotification(
+        schedule: NotificationCalendar(
+          year: scheduledDate.year,
+          month: scheduledDate.month,
+          day: scheduledDate.day,
+          hour: scheduledDate.hour,
+          minute: scheduledDate.minute,
+          second: 0,
+          allowWhileIdle: true,
+        ),
+        content: NotificationContent(
+          id: notifId,
+          channelKey: 'task_reminders',
+          title: title,
+          body: body,
+          wakeUpScreen: true,
+          autoDismissible: true,
+          category: NotificationCategory.Reminder,
+        ),
       );
-      debugPrint('[NotificationService] Scheduled OK');
+      debugPrint('[NotificationService] Scheduled: $title at $scheduledDate');
     } catch (e) {
-      debugPrint('[NotificationService] ERROR: $e');
+      debugPrint('[NotificationService] WorkManager schedule failed: $e');
+    }
+  }
+
+  static void _poll() {
+    final now = DateTime.now();
+    final due = _pendingNotifications
+        .where((n) => DateTime.parse(n['scheduledDate'] as String).isBefore(now))
+        .toList();
+
+    for (final n in due) {
+      debugPrint('[NotificationService] Poll firing: ${n['title']}');
+      AwesomeNotifications().createNotification(
+        content: NotificationContent(
+          id: n['notifId'] as int,
+          channelKey: 'task_reminders',
+          title: n['title'] as String,
+          body: n['body'] as String,
+          wakeUpScreen: true,
+          autoDismissible: true,
+        ),
+      );
+      _pendingNotifications.remove(n);
+    }
+
+    if (due.isNotEmpty) {
+      _savePending();
     }
   }
 
   static Future<void> cancelNotification(String id) async {
-    await _plugin.cancel(id.hashCode & 0x7FFFFFFF);
+    final notifId = id.hashCode & 0x7FFFFFFF;
+    _pendingNotifications.removeWhere((n) => n['id'] == id);
+    await _savePending();
+    await AwesomeNotifications().cancel(notifId);
   }
 
   static Future<void> cancelAll() async {
-    await _plugin.cancelAll();
+    _pendingNotifications.clear();
+    await _savePending();
+    await AwesomeNotifications().cancelAll();
   }
 
   static Future<void> showImmediate({
     required String title,
     required String body,
-    String channelId = 'task_reminders',
-    String channelName = 'Task Reminders',
   }) async {
-    const androidDetails = AndroidNotificationDetails(
-      'task_reminders',
-      'Task Reminders',
-      channelDescription: 'Reminders for your tasks',
-      importance: Importance.high,
-      priority: Priority.high,
-      playSound: true,
-      enableVibration: true,
-      visibility: NotificationVisibility.public,
-      autoCancel: true,
-      ongoing: false,
-      largeIcon: null,
-      icon: '@mipmap/ic_launcher',
-      styleInformation: DefaultStyleInformation(true, true),
-      ticker: 'Todoaw',
+    debugPrint('[NotificationService] Showing immediately: $title');
+    await AwesomeNotifications().createNotification(
+      content: NotificationContent(
+        id: DateTime.now().millisecondsSinceEpoch & 0x7FFFFFFF,
+        channelKey: 'task_reminders',
+        title: title,
+        body: body,
+        wakeUpScreen: true,
+        autoDismissible: true,
+      ),
     );
-    const iosDetails = DarwinNotificationDetails();
-    const details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-    await _plugin.show(
-      DateTime.now().millisecondsSinceEpoch % 100000,
-      title,
-      body,
-      details,
-    );
+  }
+
+  static Future<void> _savePending() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('pending_notifications', jsonEncode(_pendingNotifications));
+    } catch (_) {}
+  }
+
+  static Future<void> _restorePending() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('pending_notifications');
+      if (raw != null) {
+        _pendingNotifications.clear();
+        _pendingNotifications.addAll(List<Map<String, dynamic>>.from(jsonDecode(raw)));
+      }
+    } catch (_) {}
+  }
+
+  static void dispose() {
+    _pollTimer?.cancel();
   }
 }
