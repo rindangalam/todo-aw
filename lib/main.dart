@@ -17,7 +17,6 @@ import 'core/l10n/strings.dart';
 import 'presentation/router.dart';
 import 'providers/theme_provider.dart';
 import 'domain/services/notification_service.dart';
-import 'domain/services/background_service.dart';
 import 'services/tour_service.dart';
 import 'services/widget_bridge.dart';
 import 'services/widget_action.dart';
@@ -72,15 +71,6 @@ void main() async {
       },
     );
   } catch (_) {}
-
-  // Start background service for on-time notifications
-  if (!kIsWeb && Platform.isAndroid) {
-    try {
-      await BackgroundNotificationService.init();
-    } catch (e) {
-      debugPrint('[Main] Background service init error: $e');
-    }
-  }
 
   runApp(
     ProviderScope(

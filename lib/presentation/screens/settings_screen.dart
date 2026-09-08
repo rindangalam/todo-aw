@@ -8,7 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/l10n/strings.dart';
 import '../../data/database.dart';
-import '../../domain/services/background_service.dart';
 import '../../providers/data_service_provider.dart';
 import '../../providers/habit_provider.dart';
 import '../../providers/note_provider.dart';
@@ -88,7 +87,6 @@ class SettingsScreen extends ConsumerWidget {
               await AwesomeNotifications().requestPermissionToSendNotifications();
             },
           ),
-          _BackgroundServiceTile(),
           ListTile(
             leading: const Icon(Icons.battery_saver_outlined),
             title: const Text('Pengaturan Baterai (OPPO)'),
@@ -744,55 +742,6 @@ class _AccentColorTile extends ConsumerWidget {
           WidgetBridge.updateWidget();
         }
       },
-    );
-  }
-}
-
-class _BackgroundServiceTile extends StatefulWidget {
-  @override
-  State<_BackgroundServiceTile> createState() => _BackgroundServiceTileState();
-}
-
-class _BackgroundServiceTileState extends State<_BackgroundServiceTile> {
-  bool _isRunning = false;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkStatus();
-  }
-
-  Future<void> _checkStatus() async {
-    final running = await BackgroundNotificationService.isRunning();
-    if (!mounted) return;
-    setState(() {
-      _isRunning = running;
-      _loading = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SwitchListTile(
-      secondary: const Icon(Icons.timer_outlined),
-      title: const Text('Layanan Latar Belakang'),
-      subtitle: Text(
-        _isRunning
-            ? 'Aktif — notifikasi on-time'
-            : 'Nonaktif — notifikasi mungkin delay',
-      ),
-      value: _isRunning,
-      onChanged: _loading
-          ? null
-          : (value) async {
-              if (value) {
-                await BackgroundNotificationService.init();
-              } else {
-                await BackgroundNotificationService.stop();
-              }
-              await _checkStatus();
-            },
     );
   }
 }
