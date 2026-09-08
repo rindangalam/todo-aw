@@ -57,7 +57,6 @@ class TodayWidget : HomeWidgetProvider() {
             // Progress bar
             views.setInt(R.id.widget_today_progress, "setMax", 100)
             views.setInt(R.id.widget_today_progress, "setProgress", progress)
-            views.setInt(R.id.widget_today_progress, "setProgressTintList", 0)
 
             // Progress text
             views.setTextViewText(R.id.widget_today_progress_text, "$completedCount/$totalCount selesai")
