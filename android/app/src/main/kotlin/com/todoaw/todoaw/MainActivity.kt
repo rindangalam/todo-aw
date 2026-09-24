@@ -15,7 +15,6 @@ import java.io.FileOutputStream
 
 class MainActivity : FlutterActivity() {
     private val SAVE_CHANNEL = "com.todoaw.todoaw/savefile"
-    private val ACTION_CHANNEL = "com.todoaw.todoaw/widget_action"
     private val BATTERY_CHANNEL = "com.todoaw.todoaw/battery"
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
@@ -67,27 +66,6 @@ class MainActivity : FlutterActivity() {
                     result.success(savedPath)
                 } catch (e: Exception) {
                     result.error("SAVE_FAILED", e.message, null)
-                }
-            } else {
-                result.notImplemented()
-            }
-        }
-
-        // Widget action channel (new)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ACTION_CHANNEL).setMethodCallHandler { call, result ->
-            if (call.method == "getPendingAction") {
-                val action = intent?.getStringExtra("action") ?: ""
-                val taskUuid = intent?.getStringExtra("task_uuid") ?: ""
-                val noteUuid = intent?.getStringExtra("note_uuid") ?: ""
-                if (action.isNotEmpty()) {
-                    val data = mutableMapOf("action" to action, "taskUuid" to taskUuid)
-                    if (noteUuid.isNotEmpty()) data["noteUuid"] = noteUuid
-                    result.success(data)
-                    intent?.removeExtra("action")
-                    intent?.removeExtra("task_uuid")
-                    intent?.removeExtra("note_uuid")
-                } else {
-                    result.success(null)
                 }
             } else {
                 result.notImplemented()

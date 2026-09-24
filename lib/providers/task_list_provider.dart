@@ -1,11 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/models/task.dart';
 import '../data/repositories/task_repository.dart';
 import '../domain/services/notification_service.dart';
 import '../domain/services/recurring_task_service.dart';
-import '../services/widget_bridge.dart';
 import 'stats_provider.dart';
 
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
@@ -39,7 +37,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _repository.getActive());
     _scheduleAllNotifications();
-    WidgetBridge.updateWidget();
   }
 
   Future<void> refresh() async {
@@ -72,7 +69,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
       }
     }
 
-    WidgetBridge.updateWidget();
   }
 
   Future<Task> createTask({
@@ -111,7 +107,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     }
     await _repository.update(task);
     _ref.invalidate(statsProvider);
-    WidgetBridge.updateWidget();
   }
 
   Future<void> archive(Task task) async {
@@ -119,7 +114,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
       (state.value ?? []).where((t) => t.uuid != task.uuid).toList(),
     );
     await _repository.update(task.copyWith(isArchived: true));
-    WidgetBridge.updateWidget();
   }
 
   Future<void> unarchive(Task task) async {
@@ -127,7 +121,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
       [task.copyWith(isArchived: false), ...(state.value ?? [])],
     );
     await _repository.update(task.copyWith(isArchived: false));
-    WidgetBridge.updateWidget();
   }
 
   Future<void> softDelete(Task task) async {
@@ -137,7 +130,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     await NotificationService.cancelNotification(task.uuid);
     await _repository.softDelete(task.uuid);
     _ref.invalidate(statsProvider);
-    WidgetBridge.updateWidget();
   }
 
   Future<void> batchComplete(Set<String> ids) async {
@@ -155,7 +147,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
       }
     }
     _ref.invalidate(statsProvider);
-    WidgetBridge.updateWidget();
   }
 
   Future<void> batchArchive(Set<String> ids) async {
@@ -168,7 +159,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
         await _repository.update(task.copyWith(isArchived: true));
       }
     }
-    WidgetBridge.updateWidget();
   }
 
   Future<void> batchDelete(Set<String> ids) async {
@@ -179,7 +169,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
       await _repository.softDelete(id);
     }
     _ref.invalidate(statsProvider);
-    WidgetBridge.updateWidget();
   }
 
   Future<Task> saveAsTemplate(Task task) async {

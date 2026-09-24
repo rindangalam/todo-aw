@@ -3,7 +3,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:home_widget/home_widget.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -18,8 +17,6 @@ import 'presentation/router.dart';
 import 'providers/theme_provider.dart';
 import 'domain/services/notification_service.dart';
 import 'services/tour_service.dart';
-import 'services/widget_bridge.dart';
-import 'services/widget_action.dart';
 import 'data/repositories/task_repository.dart';
 
 void main() async {
@@ -51,13 +48,6 @@ void main() async {
     await TaskRepository().purgeOldTrash();
   } catch (_) {}
 
-  if (!kIsWeb) {
-    try {
-      HomeWidget.setAppGroupId(WidgetBridge.groupId);
-      HomeWidget.widgetClicked.listen((_) {});
-    } catch (_) {}
-  }
-
   final introSeen = await TourService.isIntroSeen();
   final initialLocation = introSeen ? '/' : '/intro';
 
@@ -77,20 +67,6 @@ void main() async {
       child: TodoawApp(router: router),
     ),
   );
-
-  if (!kIsWeb && Platform.isAndroid) {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      try {
-        const channel = MethodChannel('com.todoaw.todoaw/widget_action');
-        final action = await channel.invokeMethod('getPendingAction');
-        if (action != null && action is Map) {
-          PendingWidgetAction.action = action['action'] as String?;
-          PendingWidgetAction.taskUuid = action['taskUuid'] as String?;
-          PendingWidgetAction.noteUuid = action['noteUuid'] as String?;
-        }
-      } catch (_) {}
-    });
-  }
 }
 
 class TodoawApp extends ConsumerWidget {

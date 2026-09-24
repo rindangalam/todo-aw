@@ -39,66 +39,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- Home screen widget: Today (4x2) -->
-        <receiver
-            android:name=".TodayWidget"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_today_info" />
-        </receiver>
-
-        <!-- Home screen widget: Compact (4x1) -->
-        <receiver
-            android:name=".CompactWidget"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_compact_v2_info" />
-        </receiver>
-
-        <!-- Home screen widget: Quick Add (4x1) -->
-        <receiver
-            android:name=".QuickAddWidget"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_quick_add_info" />
-        </receiver>
-
-        <!-- Home screen widget: Notes Today (4x2) -->
-        <receiver
-            android:name=".NotesTodayWidget"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_notes_today_info" />
-        </receiver>
-
-        <!-- Home screen widget: Quick Note (4x1) -->
-        <receiver
-            android:name=".QuickNoteWidget"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_quick_note_info" />
-        </receiver>
-
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
