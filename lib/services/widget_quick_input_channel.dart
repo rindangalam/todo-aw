@@ -2,15 +2,31 @@ import 'package:flutter/services.dart';
 
 import '../data/repositories/note_repository.dart';
 import '../data/repositories/task_repository.dart';
+import 'widget_actions.dart';
 import 'widget_bridge.dart';
 
 const MethodChannel widgetQuickChannel = MethodChannel('todoaw/widget');
 
-/// Handles Kotlin → Dart `saveQuick` (warm path from QuickInputActivity).
+/// Handles Kotlin → Dart `saveQuick` (warm path from QuickInputActivity) and
+/// `widgetAction` (warm path from WidgetActionReceiver - routes through the
+/// same click stream the activity path uses, without opening the UI).
 Future<void> setupWidgetQuickInputChannel() async {
   widgetQuickChannel.setMethodCallHandler((call) async {
     if (call.method == 'saveQuick') {
       return _saveQuick((call.arguments as Map).cast<String, dynamic>());
+    }
+    if (call.method == 'widgetAction') {
+      final args = (call.arguments as Map).cast<String, dynamic>();
+      final uuid = args['uuid'] as String?;
+      applyWidgetUri(Uri(
+        scheme: 'todoaw',
+        host: 'widget',
+        path: args['action'] as String? ?? '',
+        queryParameters: {
+          if (uuid != null && uuid.isNotEmpty) 'uuid': uuid,
+        },
+      ));
+      return true;
     }
     throw MissingPluginException();
   });

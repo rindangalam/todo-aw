@@ -19,10 +19,18 @@ import 'presentation/router.dart';
 import 'providers/theme_provider.dart';
 import 'domain/services/notification_service.dart';
 import 'services/tour_service.dart';
+import 'services/widget_action_headless.dart';
 import 'services/widget_bridge.dart';
 import 'services/widget_quick_input_channel.dart';
 import 'services/widget_refresh_worker.dart';
 import 'data/repositories/task_repository.dart';
+
+/// Cold-path headless entrypoint invoked by WidgetActionReceiver when no
+/// Flutter engine is cached. MUST be declared in this root library: named
+/// DartEntrypoints resolve against Dart_RootLibrary() (lib/main.dart), never
+/// the file that declares the implementation.
+@pragma('vm:entry-point')
+void widgetActionHeadless() => runWidgetActionHeadless();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

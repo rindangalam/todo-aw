@@ -24,12 +24,14 @@ abstract class BaseWidgetProvider : HomeWidgetProvider() {
                 val views = RemoteViews(context.packageName, layoutRes)
                 render(context, views, widgetData, id)
                 appWidgetManager.updateAppWidget(id, views)
-            } catch (_: Exception) {
+            } catch (e: Exception) {
+                android.util.Log.e("WidgetDebug", "$javaClass.simpleName render failed id=$id", e)
                 try {
                     val fallback = RemoteViews(context.packageName, layoutRes)
                     applySafeEmpty(context, fallback, widgetData)
                     appWidgetManager.updateAppWidget(id, fallback)
-                } catch (_: Exception) {
+                } catch (e2: Exception) {
+                    android.util.Log.e("WidgetDebug", "$javaClass.simpleName fallback failed id=$id", e2)
                 }
             }
         }

@@ -22,7 +22,7 @@
             android:textSize="13sp"
             android:textStyle="bold" />
 
-        <View
+        <ImageView
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="1" />
@@ -100,7 +100,7 @@
             android:paddingTop="4dp"
             android:paddingBottom="4dp">
 
-            <View
+            <ImageView
                 android:id="@+id/widget_today_row_1_checkbox"
                 android:layout_width="14dp"
                 android:layout_height="14dp"
@@ -135,7 +135,7 @@
             android:paddingTop="4dp"
             android:paddingBottom="4dp">
 
-            <View
+            <ImageView
                 android:id="@+id/widget_today_row_2_checkbox"
                 android:layout_width="14dp"
                 android:layout_height="14dp"
@@ -170,7 +170,7 @@
             android:paddingTop="4dp"
             android:paddingBottom="4dp">
 
-            <View
+            <ImageView
                 android:id="@+id/widget_today_row_3_checkbox"
                 android:layout_width="14dp"
                 android:layout_height="14dp"
@@ -205,7 +205,7 @@
             android:paddingTop="4dp"
             android:paddingBottom="4dp">
 
-            <View
+            <ImageView
                 android:id="@+id/widget_today_row_4_checkbox"
                 android:layout_width="14dp"
                 android:layout_height="14dp"
@@ -240,7 +240,7 @@
             android:paddingTop="4dp"
             android:paddingBottom="4dp">
 
-            <View
+            <ImageView
                 android:id="@+id/widget_today_row_5_checkbox"
                 android:layout_width="14dp"
                 android:layout_height="14dp"
