@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
+import 'package:workmanager/workmanager.dart';
 
 import 'data/database.dart';
 import 'core/design/dark_theme.dart';
@@ -20,6 +21,7 @@ import 'domain/services/notification_service.dart';
 import 'services/tour_service.dart';
 import 'services/widget_bridge.dart';
 import 'services/widget_quick_input_channel.dart';
+import 'services/widget_refresh_worker.dart';
 import 'data/repositories/task_repository.dart';
 
 void main() async {
@@ -55,6 +57,27 @@ void main() async {
   if (!kIsWeb) {
     await setupWidgetQuickInputChannel();
     unawaited(refreshWidgetsFromPrefs());
+  }
+
+  // Periodic 30m widget refresh via WorkManager — register once.
+  if (!kIsWeb) {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final registered = prefs.getBool('widget_worker_registered') ?? false;
+      if (!registered) {
+        await Workmanager().initialize(callbackDispatcher);
+        await Workmanager().registerPeriodicTask(
+          '1',
+          kWidgetRefreshTask,
+          frequency: const Duration(minutes: 30),
+          existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+          constraints: Constraints(networkType: NetworkType.notRequired),
+        );
+        await prefs.setBool('widget_worker_registered', true);
+      }
+    } catch (_) {
+      // WorkManager optional; widgets still update via app-open/CRUD paths.
+    }
   }
 
   final introSeen = await TourService.isIntroSeen();
