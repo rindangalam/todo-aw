@@ -10,6 +10,7 @@ import '../data/models/note.dart';
 import '../data/models/task.dart';
 import '../data/repositories/note_repository.dart';
 import '../data/repositories/task_repository.dart';
+import 'widget_actions.dart';
 
 const String kWidgetPackageName = 'com.todoaw.todoaw';
 
@@ -296,4 +297,20 @@ Future<void> refreshWidgetsFromPrefs() async {
       platformBrightness: platformDark ? Brightness.dark : Brightness.light,
     );
   } catch (_) {}
+}
+
+/// Forward warm widget clicks (intent.data URIs delivered by home_widget's
+/// `widgetClicked` EventChannel) into [applyWidgetUri]. Call once at startup.
+/// Never throws — home_widget is unavailable on web/tests.
+void setupWidgetClickStream() {
+  try {
+    HomeWidget.widgetClicked.listen(
+      (uri) {
+        if (uri != null && uri.hasScheme) applyWidgetUri(uri);
+      },
+      onError: (Object _, StackTrace __) {},
+    );
+  } catch (_) {
+    // home_widget not available on this platform — ignore.
+  }
 }

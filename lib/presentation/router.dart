@@ -18,6 +18,7 @@ import 'screens/archive_screen.dart';
 import 'widgets/intro_slides.dart';
 
 import '../core/l10n/strings.dart';
+import '../services/widget_actions.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -63,6 +64,9 @@ GoRouter appRouter({String initialLocation = '/splash'}) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: initialLocation,
+    // Widget intent URIs pushed by the Flutter engine must never become
+    // routes — see widgetRedirect in widget_actions.dart.
+    redirect: (context, state) => widgetRedirect(Uri.parse(state.location)),
     routes: [
       GoRoute(
         path: '/splash',

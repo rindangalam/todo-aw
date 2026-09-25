@@ -63,14 +63,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
+  /// Runs once per HomeScreen mount: consume the Kotlin-side backup written
+  /// by WidgetActionReceiver (for clicks that arrived while HomeScreen was
+  /// unmounted) and handle any pending action. Cold-start widget URIs are
+  /// applied by [widgetRedirect] before HomeScreen mounts — the sticky
+  /// `initiallyLaunchedFromHomeWidget` API is deliberately NOT used here
+  /// (it would re-fire on every remount while intent.action stays LAUNCH).
   Future<void> _handleInitialWidgetAction() async {
     if (!kIsWeb) {
-      try {
-        final uri = await HomeWidget.initiallyLaunchedFromHomeWidget();
-        if (uri != null) applyWidgetUri(uri);
-      } catch (_) {
-        // home_widget not available on this platform — ignore.
-      }
+      await _drainPendingActionBackup();
     }
     _handleWidgetAction();
   }
@@ -81,6 +82,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final uuid = PendingWidgetAction.taskUuid;
     final noteUuid = PendingWidgetAction.noteUuid;
     PendingWidgetAction.clear();
+    if (!kIsWeb) unawaited(_clearPendingActionBackup());
     if (!mounted) return;
     switch (action) {
       case WidgetActions.openTask:
@@ -108,13 +110,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _toggleFromWidget(String uuid) async {
-    final tasks = ref.read(taskListProvider).value ?? [];
+    final notifier = ref.read(taskListProvider.notifier);
+    var tasks = ref.read(taskListProvider).value;
+    if (tasks == null) {
+      // Widget click can arrive before the first fetch finishes.
+      await notifier.refresh();
+      tasks = ref.read(taskListProvider).value ?? [];
+    }
     final match = tasks.where((t) => t.uuid == uuid).firstOrNull;
     if (match != null) {
-      await ref.read(taskListProvider.notifier).toggleComplete(match);
+      await notifier.toggleComplete(match);
     } else {
       // Completed/archived or stale reference — resync list only.
-      await ref.read(taskListProvider.notifier).refresh();
+      await notifier.refresh();
+    }
+  }
+
+  /// Fallback for clicks that arrived while HomeScreen was not mounted:
+  /// WidgetActionReceiver persists `pending_action`/`pending_uuid` prefs.
+  Future<void> _drainPendingActionBackup() async {
+    try {
+      final action = await HomeWidget.getWidgetData<String>('pending_action');
+      if (action == null || action.isEmpty) return;
+      final uuid = await HomeWidget.getWidgetData<String>('pending_uuid');
+      applyWidgetUri(Uri(
+        scheme: 'todoaw',
+        host: 'widget',
+        path: action,
+        queryParameters: {
+          if (uuid != null && uuid.isNotEmpty) 'uuid': uuid,
+        },
+      ));
+    } catch (_) {
+      // home_widget not available — ignore.
+    }
+  }
+
+  Future<void> _clearPendingActionBackup() async {
+    try {
+      await HomeWidget.saveWidgetData<String>('pending_action', null);
+      await HomeWidget.saveWidgetData<String>('pending_uuid', null);
+    } catch (_) {
+      // best-effort — stale backup is re-cleared on next handled action.
     }
   }
 

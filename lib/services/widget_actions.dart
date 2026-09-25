@@ -46,3 +46,44 @@ void applyWidgetUri(Uri? uri) {
   PendingWidgetAction.noteUuid = uri.queryParameters['note_uuid'];
   if (!_widgetActionEvents.isClosed) _widgetActionEvents.add(null);
 }
+
+const Set<String> _widgetActionNames = {
+  WidgetActions.openHome,
+  WidgetActions.openNotes,
+  WidgetActions.openDashboard,
+  WidgetActions.openTasksPriority,
+  WidgetActions.openTask,
+  WidgetActions.openNote,
+  WidgetActions.toggleTask,
+  WidgetActions.newTask,
+  WidgetActions.newNote,
+};
+
+/// Destinations for actions whose navigation matters; the rest land on `/`
+/// (the warm click stream opens sheets / performs the real navigation).
+const Map<String, String> _widgetActionRoutes = {
+  WidgetActions.openNotes: '/notes',
+  WidgetActions.openDashboard: '/dashboard',
+};
+
+/// GoRouter redirect guard: the Flutter engine feeds widget intent URIs into
+/// the router (cold start initial route = full `todoaw://widget/...`, warm
+/// `pushRouteInformation` = path-only `/toggle_task?...`). Full-form URIs only
+/// occur on cold start, so apply them here (the warm click stream covers
+/// path-only pushes). Path-only pushes are mapped to their real route so the
+/// engine can never render the "Page Not Found" error — which would unmount
+/// HomeScreen and kill widget action handling. Both the redirect and the
+/// click stream converge on the same destination, so delivery order does not
+/// matter.
+String? widgetRedirect(Uri uri) {
+  if (uri.scheme == 'todoaw' && uri.host == 'widget') {
+    applyWidgetUri(uri);
+    return '/';
+  }
+  if (uri.scheme.isEmpty &&
+      uri.pathSegments.isNotEmpty &&
+      _widgetActionNames.contains(uri.pathSegments.first)) {
+    return _widgetActionRoutes[uri.pathSegments.first] ?? '/';
+  }
+  return null;
+}

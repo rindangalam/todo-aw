@@ -56,6 +56,7 @@ void main() async {
   // Push home widget snapshot once app is ready (Android only).
   if (!kIsWeb) {
     await setupWidgetQuickInputChannel();
+    setupWidgetClickStream();
     unawaited(refreshWidgetsFromPrefs());
   }
 

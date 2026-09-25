@@ -1,4 +1,6 @@
-﻿import 'package:awesome_notifications/awesome_notifications.dart';
+﻿import 'dart:async';
+
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +17,7 @@ import '../../providers/task_list_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/seed_data.dart';
 import '../../services/tour_service.dart';
+import '../../services/widget_bridge.dart';
 import '../widgets/color_picker_sheet.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -257,6 +260,7 @@ class SettingsScreen extends ConsumerWidget {
     ref.invalidate(noteListProvider);
     ref.invalidate(habitListProvider);
     ref.invalidate(statsProvider);
+    unawaited(refreshWidgetsFromPrefs());
     // ignore: use_build_context_synchronously
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Data contoh berhasil dihapus')),
@@ -317,6 +321,7 @@ class SettingsScreen extends ConsumerWidget {
     ref.invalidate(noteListProvider);
     ref.invalidate(habitListProvider);
     ref.invalidate(statsProvider);
+    unawaited(refreshWidgetsFromPrefs());
     // ignore: use_build_context_synchronously
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text(S.settingsDataContohBerhasil)),
