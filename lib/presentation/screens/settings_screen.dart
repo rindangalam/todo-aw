@@ -209,6 +209,7 @@ class SettingsScreen extends ConsumerWidget {
       final filePath = await _pickJsonFile();
       if (filePath == null) return 'Dibatalkan';
       await ref.read(dataServiceProvider).importJson(filePath);
+      unawaited(refreshWidgetsFromPrefs());
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Data berhasil dipulihkan')),
@@ -291,6 +292,7 @@ class SettingsScreen extends ConsumerWidget {
     ref.invalidate(noteListProvider);
     ref.invalidate(habitListProvider);
     ref.invalidate(statsProvider);
+    unawaited(refreshWidgetsFromPrefs());
     // ignore: use_build_context_synchronously
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Semua data berhasil dihapus')),
