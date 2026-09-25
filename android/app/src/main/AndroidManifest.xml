@@ -117,6 +117,17 @@
                 android:resource="@xml/widget_quick_note_info" />
         </receiver>
 
+        <receiver
+            android:name=".widget.NotesTodayWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_notes_today_info" />
+        </receiver>
+
         <activity
             android:name=".widget.QuickInputActivity"
             android:exported="true"
