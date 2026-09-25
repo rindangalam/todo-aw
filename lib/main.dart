@@ -1,4 +1,5 @@
-﻿import 'dart:io' show Platform;
+﻿import 'dart:async' show unawaited;
+import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -17,6 +18,7 @@ import 'presentation/router.dart';
 import 'providers/theme_provider.dart';
 import 'domain/services/notification_service.dart';
 import 'services/tour_service.dart';
+import 'services/widget_bridge.dart';
 import 'data/repositories/task_repository.dart';
 
 void main() async {
@@ -47,6 +49,11 @@ void main() async {
   try {
     await TaskRepository().purgeOldTrash();
   } catch (_) {}
+
+  // Push home widget snapshot once app is ready (Android only).
+  if (!kIsWeb) {
+    unawaited(refreshWidgetsFromPrefs());
+  }
 
   final introSeen = await TourService.isIntroSeen();
   final initialLocation = introSeen ? '/' : '/intro';

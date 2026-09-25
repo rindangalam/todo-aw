@@ -1,6 +1,10 @@
 import 'dart:convert';
+import 'dart:ui' as ui;
 
+import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/models/note.dart';
 import '../data/models/task.dart';
@@ -240,4 +244,56 @@ class WidgetBridge {
     payload.addAll(paletteHex(isDark: isDark, accent: accent));
     return payload;
   }
+
+  /// Resolve dark from ThemeMode + platform brightness.
+  static bool resolveIsDark(ThemeMode mode, Brightness platformBrightness) {
+    switch (mode) {
+      case ThemeMode.light:
+        return false;
+      case ThemeMode.dark:
+        return true;
+      case ThemeMode.system:
+        return platformBrightness == Brightness.dark;
+    }
+  }
+
+  static Future<void> updateAll({
+    required ThemeMode themeMode,
+    required int accentColor,
+    Brightness platformBrightness = Brightness.light,
+  }) async {
+    try {
+      final isDark = resolveIsDark(themeMode, platformBrightness);
+      final payload = await buildPayload(isDark: isDark, accent: accentColor);
+      for (final entry in payload.entries) {
+        await HomeWidget.saveWidgetData(entry.key, entry.value);
+      }
+      for (final name in widgetClassNames) {
+        await HomeWidget.updateWidget(qualifiedAndroidName: name);
+      }
+    } catch (e, st) {
+      debugPrint('[WidgetBridge] updateAll failed: $e\n$st');
+    }
+  }
+}
+
+/// Read theme from SharedPreferences and push a fresh widget snapshot.
+/// Shared by theme hooks, CRUD hooks (Task 9), and WorkManager (Task 10).
+Future<void> refreshWidgetsFromPrefs() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final modeStr = prefs.getString('theme_mode') ?? 'system';
+    final mode = ThemeMode.values.firstWhere(
+      (m) => m.name == modeStr,
+      orElse: () => ThemeMode.system,
+    );
+    final accent = prefs.getInt('accent_color') ?? 0xFF0EA5E9;
+    final platformDark =
+        ui.PlatformDispatcher.instance.platformBrightness == Brightness.dark;
+    await WidgetBridge.updateAll(
+      themeMode: mode,
+      accentColor: accent,
+      platformBrightness: platformDark ? Brightness.dark : Brightness.light,
+    );
+  } catch (_) {}
 }

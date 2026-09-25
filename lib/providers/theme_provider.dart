@@ -1,6 +1,10 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../services/widget_bridge.dart';
 
 final themeModeProvider =
     StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
@@ -39,6 +43,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   void setMode(ThemeMode mode) {
     state = mode;
     _save();
+    unawaited(refreshWidgetsFromPrefs());
   }
 
   void toggle() {
@@ -52,6 +57,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
         break;
     }
     _save();
+    unawaited(refreshWidgetsFromPrefs());
   }
 
   static String _toString(ThemeMode mode) => mode.name;
@@ -91,5 +97,6 @@ class AccentColorNotifier extends StateNotifier<Color> {
   void setColor(Color color) {
     state = color;
     _save();
+    unawaited(refreshWidgetsFromPrefs());
   }
 }
