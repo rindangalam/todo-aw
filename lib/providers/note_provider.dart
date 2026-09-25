@@ -1,7 +1,10 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/models/note.dart';
 import '../data/repositories/note_repository.dart';
+import '../services/widget_bridge.dart';
 
 final noteRepositoryProvider = Provider<NoteRepository>((ref) {
   return NoteRepository();
@@ -41,6 +44,7 @@ class NoteListNotifier extends StateNotifier<AsyncValue<List<Note>>> {
       isPinned: isPinned,
     );
     await load();
+    unawaited(refreshWidgetsFromPrefs());
   }
 
   Future<void> update(Note note) async {
@@ -49,11 +53,13 @@ class NoteListNotifier extends StateNotifier<AsyncValue<List<Note>>> {
     );
     await _repository.update(note);
     await load();
+    unawaited(refreshWidgetsFromPrefs());
   }
 
   Future<void> togglePin(Note note) async {
     await _repository.update(note.copyWith(isPinned: !note.isPinned));
     await load();
+    unawaited(refreshWidgetsFromPrefs());
   }
 
   Future<void> delete(Note note) async {
@@ -61,6 +67,7 @@ class NoteListNotifier extends StateNotifier<AsyncValue<List<Note>>> {
       (state.value ?? []).where((n) => n.uuid != note.uuid).toList(),
     );
     await _repository.delete(note.uuid);
+    unawaited(refreshWidgetsFromPrefs());
   }
 
   Future<void> search(String query) async {

@@ -41,11 +41,11 @@ class CompactWidget : BaseWidgetProvider() {
 
         val click = if (nextUuid.isNotBlank()) {
             activityPending(
-                context, 3100, WidgetActionsNative.OPEN_TASK,
+                context, WidgetActionsNative.OPEN_TASK,
                 mapOf("uuid" to nextUuid),
             )
         } else {
-            activityPending(context, 3101, WidgetActionsNative.OPEN_HOME)
+            activityPending(context, WidgetActionsNative.OPEN_HOME)
         }
         views.setOnClickPendingIntent(R.id.widget_compact_root, click)
     }

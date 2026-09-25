@@ -1,6 +1,10 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
@@ -17,6 +21,7 @@ import '../../providers/tag_provider.dart';
 import '../widgets/error_state.dart';
 import '../../providers/task_list_provider.dart';
 import '../../services/tour_service.dart';
+import '../../services/widget_actions.dart';
 import '../widgets/note_form_sheet.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/filter_sheet.dart';
@@ -39,17 +44,78 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _quickActionsKey = GlobalKey();
   final _filterKey = GlobalKey();
   final _fabKey = GlobalKey();
+  StreamSubscription<void>? _widgetActionSub;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _initCoachmark());
+    _widgetActionSub = widgetActionEvents.listen((_) => _handleWidgetAction());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initCoachmark();
+      _handleInitialWidgetAction();
+    });
   }
 
   @override
   void dispose() {
+    _widgetActionSub?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleInitialWidgetAction() async {
+    if (!kIsWeb) {
+      try {
+        final uri = await HomeWidget.initiallyLaunchedFromHomeWidget();
+        if (uri != null) applyWidgetUri(uri);
+      } catch (_) {
+        // home_widget not available on this platform — ignore.
+      }
+    }
+    _handleWidgetAction();
+  }
+
+  void _handleWidgetAction() {
+    final action = PendingWidgetAction.action;
+    if (action == null) return;
+    final uuid = PendingWidgetAction.taskUuid;
+    final noteUuid = PendingWidgetAction.noteUuid;
+    PendingWidgetAction.clear();
+    if (!mounted) return;
+    switch (action) {
+      case WidgetActions.openTask:
+        if (uuid != null) showTaskFormSheet(context, taskId: uuid);
+        break;
+      case WidgetActions.openNote:
+        if (noteUuid != null) showNoteFormSheet(context, noteId: noteUuid);
+        break;
+      case WidgetActions.openNotes:
+        context.go('/notes');
+        break;
+      case WidgetActions.openDashboard:
+        context.go('/dashboard');
+        break;
+      case WidgetActions.openTasksPriority:
+      case WidgetActions.openHome:
+        context.go('/');
+        break;
+      case WidgetActions.toggleTask:
+        if (uuid != null) _toggleFromWidget(uuid);
+        break;
+      default:
+        break;
+    }
+  }
+
+  Future<void> _toggleFromWidget(String uuid) async {
+    final tasks = ref.read(taskListProvider).value ?? [];
+    final match = tasks.where((t) => t.uuid == uuid).firstOrNull;
+    if (match != null) {
+      await ref.read(taskListProvider.notifier).toggleComplete(match);
+    } else {
+      // Completed/archived or stale reference — resync list only.
+      await ref.read(taskListProvider.notifier).refresh();
+    }
   }
 
   Future<void> _initCoachmark() async {

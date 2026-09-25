@@ -1,3 +1,5 @@
+import 'dart:async';
+
 /// Widget action strings shared by bridge, receivers, and UI.
 class WidgetActions {
   WidgetActions._();
@@ -24,4 +26,23 @@ class PendingWidgetAction {
     taskUuid = null;
     noteUuid = null;
   }
+}
+
+final StreamController<void> _widgetActionEvents =
+    StreamController<void>.broadcast();
+
+/// Fires whenever [PendingWidgetAction] is filled from a widget click URI.
+Stream<void> get widgetActionEvents => _widgetActionEvents.stream;
+
+/// Parses a home_widget click URI (`todoaw://widget/<action>?uuid=...`) into
+/// [PendingWidgetAction] and notifies [widgetActionEvents] listeners.
+void applyWidgetUri(Uri? uri) {
+  if (uri == null) return;
+  final action =
+      uri.pathSegments.isNotEmpty ? uri.pathSegments.first : uri.host;
+  if (action.isEmpty) return;
+  PendingWidgetAction.action = action;
+  PendingWidgetAction.taskUuid = uri.queryParameters['uuid'];
+  PendingWidgetAction.noteUuid = uri.queryParameters['note_uuid'];
+  if (!_widgetActionEvents.isClosed) _widgetActionEvents.add(null);
 }

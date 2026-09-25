@@ -5,7 +5,9 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.widget.RemoteViews
+import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetProvider
 
 abstract class BaseWidgetProvider : HomeWidgetProvider() {
@@ -50,22 +52,21 @@ abstract class BaseWidgetProvider : HomeWidgetProvider() {
 
     protected fun activityPending(
         context: Context,
-        requestCode: Int,
         action: String,
         extras: Map<String, String> = emptyMap(),
     ): PendingIntent {
-        val intent = Intent(context, com.todoaw.todoaw.MainActivity::class.java).apply {
-            this.action = action
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                Intent.FLAG_ACTIVITY_SINGLE_TOP
-            extras.forEach { (k, v) -> putExtra(k, v) }
-        }
-        return PendingIntent.getActivity(
+        // home_widget 0.10 forwards clicks as intent.data URI, so encode the
+        // action + extras into the URI (PendingIntent identity = data URI).
+        val uri = Uri.Builder()
+            .scheme("todoaw")
+            .authority("widget")
+            .appendPath(action)
+            .apply { extras.forEach { (k, v) -> appendQueryParameter(k, v) } }
+            .build()
+        return HomeWidgetLaunchIntent.getActivity(
             context,
-            requestCode,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            com.todoaw.todoaw.MainActivity::class.java,
+            uri,
         )
     }
 

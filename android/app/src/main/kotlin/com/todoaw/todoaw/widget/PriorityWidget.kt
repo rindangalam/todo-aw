@@ -67,7 +67,7 @@ class PriorityWidget : BaseWidgetProvider() {
             views.setOnClickPendingIntent(
                 rowId,
                 activityPending(
-                    context, 4500 + i, WidgetActionsNative.OPEN_TASK,
+                    context, WidgetActionsNative.OPEN_TASK,
                     mapOf("uuid" to item.uuid),
                 ),
             )
@@ -75,7 +75,7 @@ class PriorityWidget : BaseWidgetProvider() {
 
         views.setOnClickPendingIntent(
             R.id.widget_priority_footer,
-            activityPending(context, 4900, WidgetActionsNative.OPEN_TASKS_PRIORITY),
+            activityPending(context, WidgetActionsNative.OPEN_TASKS_PRIORITY),
         )
     }
 

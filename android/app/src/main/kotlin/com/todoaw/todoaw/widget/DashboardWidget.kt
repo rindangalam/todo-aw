@@ -50,7 +50,7 @@ class DashboardWidget : BaseWidgetProvider() {
         views.setOnClickPendingIntent(
             R.id.widget_dashboard_next_title,
             activityPending(
-                context, 5100,
+                context,
                 if (nextUuid.isNotBlank()) WidgetActionsNative.OPEN_TASK else WidgetActionsNative.OPEN_HOME,
                 if (nextUuid.isNotBlank()) mapOf("uuid" to nextUuid) else emptyMap(),
             ),
@@ -74,11 +74,11 @@ class DashboardWidget : BaseWidgetProvider() {
         )
         views.setOnClickPendingIntent(
             R.id.widget_dashboard_btn_view_all,
-            activityPending(context, 5300, WidgetActionsNative.OPEN_HOME),
+            activityPending(context, WidgetActionsNative.OPEN_HOME),
         )
         views.setOnClickPendingIntent(
             R.id.widget_dashboard_progress_text,
-            activityPending(context, 5301, WidgetActionsNative.OPEN_DASHBOARD),
+            activityPending(context, WidgetActionsNative.OPEN_DASHBOARD),
         )
     }
 }

@@ -60,7 +60,7 @@ class NotesTodayWidget : BaseWidgetProvider() {
             views.setOnClickPendingIntent(
                 rootId,
                 activityPending(
-                    context, 7100 + i, WidgetActionsNative.OPEN_NOTE,
+                    context, WidgetActionsNative.OPEN_NOTE,
                     mapOf("uuid" to item.uuid),
                 ),
             )
@@ -68,7 +68,7 @@ class NotesTodayWidget : BaseWidgetProvider() {
 
         views.setOnClickPendingIntent(
             R.id.widget_notes_today_date,
-            activityPending(context, 7200, WidgetActionsNative.OPEN_NOTES),
+            activityPending(context, WidgetActionsNative.OPEN_NOTES),
         )
     }
 

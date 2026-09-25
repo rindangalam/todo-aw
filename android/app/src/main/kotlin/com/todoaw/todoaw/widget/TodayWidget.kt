@@ -63,7 +63,7 @@ class TodayWidget : BaseWidgetProvider() {
             views.setOnClickPendingIntent(
                 rowId,
                 activityPending(
-                    context, 1000 + i,
+                    context,
                     WidgetActionsNative.OPEN_TASK,
                     mapOf("uuid" to item.uuid),
                 ),
@@ -72,7 +72,7 @@ class TodayWidget : BaseWidgetProvider() {
 
         views.setOnClickPendingIntent(
             R.id.widget_today_logo,
-            activityPending(context, 9000, WidgetActionsNative.OPEN_HOME),
+            activityPending(context, WidgetActionsNative.OPEN_HOME),
         )
     }
 
