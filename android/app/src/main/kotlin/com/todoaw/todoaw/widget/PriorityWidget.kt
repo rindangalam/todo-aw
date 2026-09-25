@@ -18,6 +18,10 @@ class PriorityWidget : BaseWidgetProvider() {
         val p = WidgetTheme.palette(data)
         WidgetTheme.applyRoot(views, p, R.id.widget_priority_root)
 
+        views.setTextColor(R.id.widget_priority_header, p.text)
+        views.setTextColor(R.id.widget_priority_empty, p.muted)
+        views.setTextColor(R.id.widget_priority_footer, p.accent)
+
         val tasks = WidgetData.priorityTasks(data)
         views.setTextViewText(R.id.widget_priority_count, "${tasks.size} tugas")
         views.setTextColor(R.id.widget_priority_count, p.muted)

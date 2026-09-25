@@ -21,6 +21,9 @@ class NotesTodayWidget : BaseWidgetProvider() {
         val p = WidgetTheme.palette(data)
         WidgetTheme.applyRoot(views, p, R.id.widget_notes_today_root)
 
+        views.setTextColor(R.id.widget_notes_today_header, p.text)
+        views.setTextColor(R.id.widget_notes_today_empty, p.muted)
+
         val dateFmt = SimpleDateFormat("EEE, d MMM", Locale("id", "ID"))
         views.setTextViewText(R.id.widget_notes_today_date, WidgetData.str(data, "dateLabel").ifBlank { dateFmt.format(Date()) })
         views.setTextColor(R.id.widget_notes_today_date, p.muted)

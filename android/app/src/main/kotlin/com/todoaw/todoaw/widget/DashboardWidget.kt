@@ -24,7 +24,8 @@ class DashboardWidget : BaseWidgetProvider() {
         val completed = WidgetData.int(data, "completedCount")
         val total = WidgetData.int(data, "totalCount")
         views.setTextViewText(R.id.widget_dashboard_progress_text, "$completed/$total")
-        views.setTextColor(R.id.widget_dashboard_progress_text, p.text)
+        // Accent pill background — keep white text in both themes.
+        views.setTextColor(R.id.widget_dashboard_progress_text, 0xFFFFFFFF.toInt())
 
         views.setInt(R.id.widget_dashboard_card_tasks, "setBackgroundColor", p.card)
         views.setInt(R.id.widget_dashboard_card_notes, "setBackgroundColor", p.card)
@@ -32,10 +33,14 @@ class DashboardWidget : BaseWidgetProvider() {
 
         views.setTextViewText(R.id.widget_dashboard_stat_tasks, WidgetData.str(data, "tasksTodayCount"))
         views.setTextColor(R.id.widget_dashboard_stat_tasks, p.accent)
+        views.setTextColor(R.id.widget_dashboard_label_tasks, p.muted)
         views.setTextViewText(R.id.widget_dashboard_stat_notes, WidgetData.str(data, "notesTodayCount"))
         views.setTextColor(R.id.widget_dashboard_stat_notes, p.success)
+        views.setTextColor(R.id.widget_dashboard_label_notes, p.muted)
         views.setTextViewText(R.id.widget_dashboard_stat_total, WidgetData.str(data, "totalTodayCount"))
         views.setTextColor(R.id.widget_dashboard_stat_total, p.accent)
+        views.setTextColor(R.id.widget_dashboard_label_total, p.muted)
+        views.setTextColor(R.id.widget_dashboard_btn_view_all, p.muted)
 
         val nextTitle = WidgetData.str(data, "nextTaskTitle")
         val nextTime = WidgetData.str(data, "nextTaskTime")

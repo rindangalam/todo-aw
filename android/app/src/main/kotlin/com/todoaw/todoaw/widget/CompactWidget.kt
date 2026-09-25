@@ -20,7 +20,9 @@ class CompactWidget : BaseWidgetProvider() {
         val completed = WidgetData.int(data, "completedCount")
         val total = WidgetData.int(data, "totalCount")
         views.setTextViewText(R.id.widget_compact_progress, "$completed/$total")
-        views.setTextColor(R.id.widget_compact_progress, p.text)
+        // Accent pill background — keep white text in both themes.
+        views.setTextColor(R.id.widget_compact_progress, 0xFFFFFFFF.toInt())
+        views.setTextColor(R.id.widget_compact_chevron, p.muted)
 
         val nextTitle = WidgetData.str(data, "nextTaskTitle")
         val nextTime = WidgetData.str(data, "nextTaskTime")

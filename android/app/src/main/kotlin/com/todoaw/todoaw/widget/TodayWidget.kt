@@ -22,11 +22,15 @@ class TodayWidget : BaseWidgetProvider() {
         views.setTextColor(R.id.widget_today_date, p.muted)
         views.setTextViewText(R.id.widget_today_logo, "todoaw")
         views.setTextColor(R.id.widget_today_logo, p.text)
+        views.setTextColor(R.id.widget_today_title, p.text)
+        views.setTextColor(R.id.widget_today_subtitle, p.muted)
+        views.setTextColor(R.id.widget_today_empty, p.muted)
 
         val completed = WidgetData.int(data, "completedCount")
         val total = WidgetData.int(data, "totalCount")
         views.setTextViewText(R.id.widget_today_progress_text, "$completed/$total")
-        views.setTextColor(R.id.widget_today_progress_text, p.text)
+        // Accent pill background — keep white text in both themes.
+        views.setTextColor(R.id.widget_today_progress_text, 0xFFFFFFFF.toInt())
 
         val tasks = WidgetData.todayTasks(data)
         if (tasks.isEmpty()) {
