@@ -19,6 +19,7 @@ import 'providers/theme_provider.dart';
 import 'domain/services/notification_service.dart';
 import 'services/tour_service.dart';
 import 'services/widget_bridge.dart';
+import 'services/widget_quick_input_channel.dart';
 import 'data/repositories/task_repository.dart';
 
 void main() async {
@@ -52,6 +53,7 @@ void main() async {
 
   // Push home widget snapshot once app is ready (Android only).
   if (!kIsWeb) {
+    await setupWidgetQuickInputChannel();
     unawaited(refreshWidgetsFromPrefs());
   }
 

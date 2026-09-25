@@ -9,6 +9,7 @@ import android.provider.MediaStore
 import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.FlutterEngineCache
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
 import java.io.FileOutputStream
@@ -16,9 +17,47 @@ import java.io.FileOutputStream
 class MainActivity : FlutterActivity() {
     private val SAVE_CHANNEL = "com.todoaw.todoaw/savefile"
     private val BATTERY_CHANNEL = "com.todoaw.todoaw/battery"
+    private val WIDGET_CHANNEL = "todoaw/widget"
+    private var widgetChannel: MethodChannel? = null
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        // Cache engine so widget QuickInputActivity can call Dart directly.
+        FlutterEngineCache.getInstance().put("todoaw_engine", flutterEngine)
+
+        widgetChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, WIDGET_CHANNEL)
+        // Dart pulls cold-path quick input payload written by QuickInputActivity.
+        widgetChannel?.setMethodCallHandler { call, result ->
+            if (call.method == "getPendingQuickInput") {
+                try {
+                    val prefs = getSharedPreferences("HomeWidgetPreferences", MODE_PRIVATE)
+                    val mode = prefs.getString("pending_quick_mode", null)
+                    val title = prefs.getString("pending_quick_title", null)
+                    val time = prefs.getString("pending_quick_time", null)
+                    if (mode != null && title != null) {
+                        prefs.edit()
+                            .remove("pending_quick_mode")
+                            .remove("pending_quick_title")
+                            .remove("pending_quick_time")
+                            .apply()
+                        result.success(
+                            mapOf(
+                                "mode" to mode,
+                                "title" to title,
+                                "time" to (time ?: ""),
+                            ),
+                        )
+                    } else {
+                        result.success(null)
+                    }
+                } catch (e: Exception) {
+                    result.error("DRAIN_FAILED", e.message, null)
+                }
+            } else {
+                result.notImplemented()
+            }
+        }
 
         // Battery settings channel — opens OPPO Auto-Launch or battery optimization
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, BATTERY_CHANNEL).setMethodCallHandler { call, result ->
