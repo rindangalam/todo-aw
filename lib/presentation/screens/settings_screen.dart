@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:file_picker/file_picker.dart';
@@ -72,13 +72,15 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: const Text('Buka pengaturan notifikasi HP Anda'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () async {
-              await AwesomeNotifications().requestPermissionToSendNotifications();
+              await AwesomeNotifications()
+                  .requestPermissionToSendNotifications();
             },
           ),
           ListTile(
             leading: const Icon(Icons.battery_saver_outlined),
-            title: const Text('Pengaturan Baterai (OPPO)'),
-            subtitle: const Text('Nonaktifkan pengoptimalan baterai untuk Todoaw'),
+            title: const Text('Pengaturan Baterai'),
+            subtitle:
+                const Text('Nonaktifkan pengoptimalan baterai untuk Todoaw'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _openBatterySettings(context),
           ),
@@ -102,55 +104,18 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/archive'),
           ),
-
           ListTile(
             leading: const Icon(Icons.delete_outline),
             title: const Text(S.settingsTempatSampah),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/trash'),
           ),
-          _ExportTile(
-            icon: Icons.backup,
-            title: S.settingsBackup,
-            subtitle: 'Todoaw Backup (.json)',
-            onExport: () => ref.read(dataServiceProvider).exportJson(),
-          ),
-          _ExportTile(
-            icon: Icons.restore,
-            title: S.settingsRestore,
-            onExport: () => _restoreData(context, ref),
-          ),
-          _ExportTile(
-            icon: Icons.file_download,
-            title: S.settingsExportJson,
-            onExport: () => ref.read(dataServiceProvider).exportJson(),
-          ),
-          _ExportTile(
-            icon: Icons.table_chart_outlined,
-            title: S.settingsExportExcel,
-            subtitle: 'Semua data (.xlsx)',
-            onExport: () => ref.read(dataServiceProvider).exportExcel(),
-          ),
-          _ExportTile(
-            icon: Icons.storage,
-            title: S.settingsExportSqlite,
-            onExport: () => ref.read(dataServiceProvider).exportSqlite(),
-          ),
-          const Divider(height: 1),
           ListTile(
-            leading: const Icon(Icons.dataset_outlined),
-            title: const Text(S.settingsMuatContohData),
-            onTap: () => _confirmMuatContoh(context, ref),
-          ),
-          ListTile(
-            leading: const Icon(Icons.cleaning_services_outlined),
-            title: const Text(S.settingsHapusContohData),
-            onTap: () => _confirmHapusContoh(context, ref),
-          ),
-          ListTile(
-            leading: const Icon(Icons.delete_forever_outlined),
-            title: const Text(S.settingsHapusData),
-            onTap: () => _confirmHapusData(context, ref),
+            leading: const Icon(Icons.storage),
+            title: const Text('Manajemen Data'),
+            subtitle: const Text('Backup, pulihkan, export, hapus data'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _showDataActionsSheet(context, ref),
           ),
           ListTile(
             leading: const Icon(Icons.tour_outlined),
@@ -201,6 +166,102 @@ class SettingsScreen extends ConsumerWidget {
           ),
         );
       }
+    }
+  }
+
+  void _showDataActionsSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) {
+        // Close the sheet first, then act with the page-level context so
+        // dialogs/snackbars never stack on a dismissing sheet.
+        Future<void> run(Future<void> Function() action) async {
+          Navigator.pop(sheetContext);
+          await action();
+        }
+
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                ListTile(
+                  leading: const Icon(Icons.backup),
+                  title: const Text(S.settingsBackup),
+                  subtitle: const Text('Todoaw Backup (.json)'),
+                  onTap: () => run(() => _runExport(context,
+                      () => ref.read(dataServiceProvider).exportJson())),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.restore),
+                  title: const Text(S.settingsRestore),
+                  onTap: () => run(() => _restoreData(context, ref)),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.file_download),
+                  title: const Text(S.settingsExportJson),
+                  onTap: () => run(() => _runExport(context,
+                      () => ref.read(dataServiceProvider).exportJson())),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.table_chart_outlined),
+                  title: const Text(S.settingsExportExcel),
+                  subtitle: const Text('Semua data (.xlsx)'),
+                  onTap: () => run(() => _runExport(context,
+                      () => ref.read(dataServiceProvider).exportExcel())),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.storage),
+                  title: const Text(S.settingsExportSqlite),
+                  onTap: () => run(() => _runExport(context,
+                      () => ref.read(dataServiceProvider).exportSqlite())),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.dataset_outlined),
+                  title: const Text(S.settingsMuatContohData),
+                  onTap: () => run(() => _confirmMuatContoh(context, ref)),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.cleaning_services_outlined),
+                  title: const Text(S.settingsHapusContohData),
+                  onTap: () => run(() => _confirmHapusContoh(context, ref)),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete_forever_outlined),
+                  title: const Text(S.settingsHapusData),
+                  onTap: () => run(() => _confirmHapusData(context, ref)),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _runExport(
+    BuildContext context,
+    Future<String> Function() action,
+  ) async {
+    try {
+      final path = await action();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tersimpan di: $path'),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal: $e')),
+      );
     }
   }
 
@@ -327,46 +388,6 @@ class SettingsScreen extends ConsumerWidget {
     // ignore: use_build_context_synchronously
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text(S.settingsDataContohBerhasil)),
-    );
-  }
-}
-
-class _ExportTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-  final Future<String> Function() onExport;
-
-  const _ExportTile({
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    required this.onExport,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: subtitle != null ? Text(subtitle!) : null,
-      onTap: () async {
-        try {
-          final path = await onExport();
-          // ignore: use_build_context_synchronously
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Tersimpan di: $path'),
-              duration: const Duration(seconds: 4),
-            ),
-          );
-        } catch (e) {
-          // ignore: use_build_context_synchronously
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Gagal: $e')),
-          );
-        }
-      },
     );
   }
 }
