@@ -545,30 +545,6 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                             label: const Text(S.taskArsipkan),
                           ),
                         ),
-                        const SizedBox(height: Spacing.sm),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () async {
-                              final repo = ref.read(taskRepositoryProvider);
-                              final task = await repo.getById(widget.taskId!);
-                              if (task != null) {
-                                await ref
-                                    .read(taskListProvider.notifier)
-                                    .saveAsTemplate(task);
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            S.taskDisimpanSebagaiTemplate)),
-                                  );
-                                }
-                              }
-                            },
-                            icon: const Icon(Icons.bookmark_border),
-                            label: const Text(S.taskSimpanSebagaiTemplate),
-                          ),
-                        ),
                         const SizedBox(height: Spacing.lg),
                         Text(S.taskSubtask,
                             style: theme.textTheme.titleSmall

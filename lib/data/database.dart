@@ -439,16 +439,6 @@ class AppDatabase {
     return maps.map((m) => Task.fromMap(m)).toList();
   }
 
-  static Future<List<Task>> getTemplates() async {
-    final maps = await instance.query(
-      'tasks',
-      where: 'isTemplate = ? AND isArchived = ? AND deletedAt IS NULL',
-      whereArgs: [1, 0],
-      orderBy: 'updatedAt DESC',
-    );
-    return maps.map((m) => Task.fromMap(m)).toList();
-  }
-
   static Future<Note?> getNote(String uuid) async {
     final maps = await instance.query(
       'notes',

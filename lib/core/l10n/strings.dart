@@ -65,12 +65,6 @@ class S {
   static const String taskHapus = 'Hapus Tugas';
   static const String taskSimpan = 'Simpan';
   static const String taskBatal = 'Batal';
-  static const String taskSimpanSebagaiTemplate = 'Simpan sebagai Template';
-  static const String taskDisimpanSebagaiTemplate = 'Disimpan sebagai template';
-
-  static const String templatePilih = 'Pilih Template';
-  static const String templateBelumAda = 'Belum ada template';
-  static const String quickDariTemplate = 'Dari Template';
 
   static const String taskBaru = 'Tugas Baru';
   static const String taskEdit = 'Edit Tugas';

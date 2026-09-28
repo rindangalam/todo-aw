@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/design/tokens.dart';
 import '../../core/l10n/strings.dart';
-import '../../providers/task_list_provider.dart';
 import '../screens/task_form_screen.dart';
 import 'progress_ring.dart';
 
@@ -63,82 +61,6 @@ class HomeHero extends StatelessWidget {
             ),
             const SizedBox(height: Spacing.lg),
             _QuickActions(key: quickActionsKey),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TemplatePickerSheet extends ConsumerWidget {
-  const _TemplatePickerSheet();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final templatesAsync = ref.watch(templateListProvider);
-    return DraggableScrollableSheet(
-      initialChildSize: 0.5,
-      maxChildSize: 0.85,
-      minChildSize: 0.3,
-      expand: false,
-      builder: (_, scrollController) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 32,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(S.templatePilih,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-            const SizedBox(height: 12),
-            Expanded(
-              child: templatesAsync.when(
-                data: (templates) {
-                  if (templates.isEmpty) {
-                    return const Center(child: Text(S.templateBelumAda));
-                  }
-                  return ListView.separated(
-                    controller: scrollController,
-                    itemCount: templates.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (_, i) {
-                      final t = templates[i];
-                      return ListTile(
-                        title: Text(t.title),
-                        subtitle:
-                            t.description != null && t.description!.isNotEmpty
-                                ? Text(t.description!,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis)
-                                : null,
-                        leading: const Icon(Icons.bookmark,
-                            color: Color(0xFF8B5CF6)),
-                        onTap: () async {
-                          Navigator.pop(context);
-                          await ref
-                              .read(taskListProvider.notifier)
-                              .createFromTemplate(t.uuid);
-                        },
-                      );
-                    },
-                  );
-                },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Gagal memuat: $e')),
-              ),
-            ),
           ],
         ),
       ),
@@ -358,14 +280,6 @@ class _QuickActions extends StatelessWidget {
         ),
         Expanded(
           child: _ActionButton(
-            icon: Icons.bookmark,
-            label: S.quickDariTemplate,
-            color: const Color(0xFF8B5CF6),
-            onTap: () => _showTemplatePicker(context),
-          ),
-        ),
-        Expanded(
-          child: _ActionButton(
             icon: Icons.lightbulb_outline,
             label: S.quickTambahCatatan,
             color: ColorTokens.secondary,
@@ -389,17 +303,6 @@ class _QuickActions extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  void _showTemplatePicker(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(RadiusTokens.lg)),
-      ),
-      builder: (_) => const _TemplatePickerSheet(),
     );
   }
 }

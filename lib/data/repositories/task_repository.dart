@@ -133,22 +133,4 @@ class TaskRepository {
       }
     }
   }
-
-  Future<List<Task>> getTemplates() => AppDatabase.getTemplates();
-
-  Future<Task> createTemplateFromTask(Task task) async {
-    final now = DateTime.now();
-    final t = Task(
-      uuid: _uuid.v4(),
-      title: task.title,
-      description: task.description,
-      priority: task.priority,
-      categoryId: task.categoryId,
-      isTemplate: true,
-      createdAt: now,
-      updatedAt: now,
-    );
-    await AppDatabase.insertTask(t);
-    return t;
-  }
 }

@@ -22,10 +22,6 @@ final archivedTaskListProvider = FutureProvider<List<Task>>((ref) {
   return ref.read(taskRepositoryProvider).getArchived();
 });
 
-final templateListProvider = FutureProvider<List<Task>>((ref) {
-  return ref.read(taskRepositoryProvider).getTemplates();
-});
-
 class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
   final TaskRepository _repository;
   final Ref _ref;
@@ -181,21 +177,6 @@ class TaskListNotifier extends StateNotifier<AsyncValue<List<Task>>> {
     }
     _ref.invalidate(statsProvider);
     unawaited(refreshWidgetsFromPrefs());
-  }
-
-  Future<Task> saveAsTemplate(Task task) async {
-    final template = await _repository.createTemplateFromTask(task);
-    await load();
-    return template;
-  }
-
-  Future<Task> createFromTemplate(String templateId) async {
-    final template = await _repository.getById(templateId);
-    if (template == null) throw Exception('Template not found');
-    final task = await _repository.createFromTask(template);
-    _ref.invalidate(statsProvider);
-    await load();
-    return task;
   }
 
   void _scheduleAllNotifications() {
