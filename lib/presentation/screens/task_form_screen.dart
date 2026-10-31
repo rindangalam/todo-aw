@@ -326,8 +326,13 @@ class TaskFormSheetState extends ConsumerState<TaskFormSheet> {
                           error: (_, __) =>
                               const Text('Error loading categories'),
                           data: (categories) {
+                            // Dangling categoryId (category deleted before
+                            // cleanup existed) has no matching item, which
+                            // trips DropdownButton's uniqueness assertion.
+                            final hasCategory = _categoryId != null &&
+                                categories.any((c) => c.uuid == _categoryId);
                             return DropdownButtonFormField<String?>(
-                              value: _categoryId,
+                              value: hasCategory ? _categoryId : null,
                               decoration: InputDecoration(
                                 hintText: S.taskTidakAdaKategori,
                                 border: OutlineInputBorder(

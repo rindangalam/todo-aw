@@ -47,17 +47,6 @@
         </receiver>
 
         <receiver
-            android:name=".widget.CompactWidget"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_compact_info" />
-        </receiver>
-
-        <receiver
             android:name=".widget.PriorityWidget"
             android:exported="true">
             <intent-filter>
@@ -83,27 +72,11 @@
             android:name=".widget.WidgetActionReceiver"
             android:exported="false" />
 
-        <receiver
-            android:name=".widget.QuickAddWidget"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_quick_add_info" />
-        </receiver>
-
-        <receiver
-            android:name=".widget.QuickNoteWidget"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_quick_note_info" />
-        </receiver>
+        <!-- Adapter backing the scrollable task list in TodayWidget. -->
+        <service
+            android:name=".widget.TodayWidgetRemoteViewsService"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS" />
 
         <receiver
             android:name=".widget.NotesTodayWidget"

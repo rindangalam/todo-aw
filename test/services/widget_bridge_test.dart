@@ -9,6 +9,8 @@ Task task({
   Priority priority = Priority.p3,
   DateTime? dueDate,
   bool isCompleted = false,
+  bool isArchived = false,
+  DateTime? deletedAt,
   DateTime? createdAt,
   DateTime? updatedAt,
 }) {
@@ -19,6 +21,8 @@ Task task({
     priority: priority,
     dueDate: dueDate,
     isCompleted: isCompleted,
+    isArchived: isArchived,
+    deletedAt: deletedAt,
     createdAt: createdAt ?? now,
     updatedAt: updatedAt ?? now,
   );
@@ -85,6 +89,83 @@ void main() {
         ),
       ];
       expect(WidgetBridge.progressFor(tasks, startOfToday), 50);
+    });
+  });
+
+  group('todayScope', () {
+    test('excludes trashed and archived tasks from lists and progress', () {
+      final tasks = [
+        task(
+          uuid: 'pending',
+          title: 'Pending',
+          dueDate: startOfToday.add(const Duration(hours: 9)),
+        ),
+        task(
+          uuid: 'done',
+          title: 'Done',
+          isCompleted: true,
+          dueDate: startOfToday.add(const Duration(hours: 10)),
+        ),
+        for (final completed in [false, true]) ...[
+          task(
+            uuid: 'trashed-$completed',
+            title: 'Trashed',
+            isCompleted: completed,
+            deletedAt: today,
+            dueDate: startOfToday,
+          ),
+          task(
+            uuid: 'archived-$completed',
+            title: 'Archived',
+            isCompleted: completed,
+            isArchived: true,
+            dueDate: startOfToday,
+          ),
+        ],
+      ];
+
+      expect(WidgetBridge.todayTasks(tasks, startOfToday).map((t) => t.uuid),
+          ['pending']);
+      expect(WidgetBridge.todayScope(tasks, startOfToday).map((t) => t.uuid),
+          ['pending', 'done']);
+      expect(WidgetBridge.progressFor(tasks, startOfToday), 50);
+      final inactive = tasks.skip(2).toList();
+      expect(WidgetBridge.todayScope(inactive, startOfToday), isEmpty);
+      expect(WidgetBridge.todayTasks(inactive, startOfToday), isEmpty);
+      expect(WidgetBridge.progressFor(inactive, startOfToday), 0);
+    });
+
+    test('keeps completed tasks, chronological so checked stay in place', () {
+      final tasks = [
+        task(
+          uuid: 'late',
+          title: 'Late',
+          dueDate: startOfToday.add(const Duration(hours: 20)),
+        ),
+        task(
+          uuid: 'done-early',
+          title: 'Done early',
+          isCompleted: true,
+          dueDate: startOfToday.add(const Duration(hours: 8)),
+        ),
+        task(
+          uuid: 'early',
+          title: 'Early',
+          dueDate: startOfToday.add(const Duration(hours: 9)),
+        ),
+        task(uuid: 'no-due', title: 'No due'),
+        task(
+          uuid: 'overdue',
+          title: 'Overdue',
+          dueDate: startOfToday.subtract(const Duration(days: 1)),
+        ),
+      ];
+
+      // Unlike todayTasks, a completed task is NOT filtered out: the Today
+      // widget shows it struck-through in its original time slot.
+      final result = WidgetBridge.todayScope(tasks, startOfToday);
+      expect(result.map((t) => t.uuid), ['done-early', 'early', 'late']);
+      expect(result.map((t) => t.isCompleted), [true, false, false]);
     });
   });
 

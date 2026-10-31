@@ -331,11 +331,22 @@ class AppDatabase {
   }
 
   static Future<void> deleteCategory(String uuid) async {
-    await instance.delete(
-      'categories',
-      where: 'uuid = ?',
-      whereArgs: [uuid],
-    );
+    await instance.transaction((txn) async {
+      // Clear dangling references first: otherwise tasks keep pointing at a
+      // deleted category and the task form's category dropdown crashes with
+      // "There should be exactly one item with [DropdownButton]'s value".
+      await txn.update(
+        'tasks',
+        {'categoryId': null},
+        where: 'categoryId = ?',
+        whereArgs: [uuid],
+      );
+      await txn.delete(
+        'categories',
+        where: 'uuid = ?',
+        whereArgs: [uuid],
+      );
+    });
   }
 
   static Future<List<Habit>> getAllHabits() async {

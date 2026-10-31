@@ -115,8 +115,10 @@
 - **Task reminder notifications** based on set deadlines
 - **Focus session completion notifications**
 - **Android Home Widgets** - View task summary on home screen
-  - Compact widget
-  - List widget
+  - Today widget (4x2)
+  - Priority widget (4x2)
+  - Notes Today widget (4x2)
+  - Dashboard widget (4x4)
 
 ---
 

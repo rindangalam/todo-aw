@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:todoaw/data/repositories/category_repository.dart';
+import 'package:todoaw/data/repositories/task_repository.dart';
 
 import '../test_helpers.dart';
 
@@ -89,6 +90,30 @@ void main() {
       await repo.delete(cat.uuid);
       final found = await repo.getById(cat.uuid);
       expect(found, isNull);
+    });
+
+    // Regression: a dangling categoryId made the task form's category
+    // DropdownButton throw "There should be exactly one item with
+    // [DropdownButton]'s value", breaking the form.
+    test('clears categoryId on tasks referencing the deleted category',
+        () async {
+      final linked = await createTestCategory(name: 'Linked');
+      final kept = await createTestCategory(name: 'Kept');
+      final usingDeleted =
+          await createTestTask(title: 'Uses deleted', categoryId: linked.uuid);
+      final usingKept =
+          await createTestTask(title: 'Uses kept', categoryId: kept.uuid);
+
+      await repo.delete(linked.uuid);
+
+      final tasks = await TaskRepository().getAll();
+      final stale =
+          tasks.firstWhere((t) => t.uuid == usingDeleted.uuid);
+      final untouched = tasks.firstWhere((t) => t.uuid == usingKept.uuid);
+
+      expect(stale.categoryId, isNull);
+      // Tasks on other categories must be left alone.
+      expect(untouched.categoryId, kept.uuid);
     });
   });
 }

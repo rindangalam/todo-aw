@@ -1,13 +1,34 @@
 package com.todoaw.todoaw.widget
 
+import android.app.PendingIntent
+import android.appwidget.AppWidgetManager
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
-import android.view.View
 import android.widget.RemoteViews
 import com.todoaw.todoaw.R
 
 class TodayWidget : BaseWidgetProvider() {
     override val layoutRes = R.layout.widget_today
+
+    override fun onUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray,
+        widgetData: SharedPreferences,
+    ) {
+        super.onUpdate(context, appWidgetManager, appWidgetIds, widgetData)
+        // The adapter Intent is identical on every refresh, so the framework
+        // would keep the cached RemoteViewsFactory and keep rendering the old
+        // task snapshot. Ask each list to re-read the payload instead.
+        for (id in appWidgetIds) {
+            try {
+                appWidgetManager.notifyAppWidgetViewDataChanged(id, R.id.widget_today_list)
+            } catch (e: Exception) {
+                android.util.Log.e("WidgetDebug", "TodayWidget notifyDataChanged failed id=$id", e)
+            }
+        }
+    }
 
     override fun render(
         context: Context,
@@ -32,47 +53,14 @@ class TodayWidget : BaseWidgetProvider() {
         // Accent pill background — keep white text in both themes.
         views.setTextColor(R.id.widget_today_progress_text, 0xFFFFFFFF.toInt())
 
-        val tasks = WidgetData.todayTasks(data)
-        if (tasks.isEmpty()) {
-            views.setViewVisibility(R.id.widget_today_empty, View.VISIBLE)
-            views.setViewVisibility(R.id.widget_today_rows, View.GONE)
-        } else {
-            views.setViewVisibility(R.id.widget_today_empty, View.GONE)
-            views.setViewVisibility(R.id.widget_today_rows, View.VISIBLE)
+        // Adapter-backed so the list scrolls; the factory renders checked tasks
+        // struck-through instead of dropping them.
+        val serviceIntent = Intent(context, TodayWidgetRemoteViewsService::class.java).apply {
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)
         }
-
-        for (i in 1..5) {
-            val rowId = resId(context, "widget_today_row_$i")
-            val titleId = resId(context, "widget_today_row_${i}_title")
-            val timeId = resId(context, "widget_today_row_${i}_time")
-            val cbId = resId(context, "widget_today_row_${i}_checkbox")
-
-            val item = tasks.getOrNull(i - 1)
-            if (item == null) {
-                views.setViewVisibility(rowId, View.GONE)
-                continue
-            }
-            views.setViewVisibility(rowId, View.VISIBLE)
-            views.setTextViewText(titleId, item.title)
-            views.setTextColor(titleId, p.text)
-            views.setTextViewText(timeId, item.time)
-            views.setTextColor(timeId, p.muted)
-            views.setInt(
-                cbId,
-                "setBackgroundResource",
-                if (item.done) R.drawable.widget_checkbox_done
-                else R.drawable.widget_checkbox_todo,
-            )
-            views.setOnClickPendingIntent(cbId, togglePending(context, 2000 + i, item.uuid))
-            views.setOnClickPendingIntent(
-                rowId,
-                activityPending(
-                    context,
-                    WidgetActionsNative.OPEN_TASK,
-                    mapOf("uuid" to item.uuid),
-                ),
-            )
-        }
+        views.setRemoteAdapter(R.id.widget_today_list, serviceIntent)
+        views.setEmptyView(R.id.widget_today_list, R.id.widget_today_empty)
+        views.setPendingIntentTemplate(R.id.widget_today_list, toggleTemplatePending(context, widgetId))
 
         views.setOnClickPendingIntent(
             R.id.widget_today_logo,
@@ -84,6 +72,21 @@ class TodayWidget : BaseWidgetProvider() {
         WidgetTheme.applyRoot(views, WidgetTheme.palette(data), R.id.widget_today_root)
     }
 
-    private fun resId(context: Context, name: String): Int =
-        context.resources.getIdentifier(name, "id", context.packageName)
+    /**
+     * One template PendingIntent serves every row. The task uuid is supplied
+     * per row via `setOnClickFillInIntent`, so unlike [togglePending] this
+     * MUST be mutable — FLAG_IMMUTABLE would discard the fill-in extras and
+     * the receiver would never know which task to toggle.
+     */
+    private fun toggleTemplatePending(context: Context, widgetId: Int): PendingIntent {
+        val intent = Intent(context, WidgetActionReceiver::class.java).apply {
+            action = WidgetActionsNative.ACTION_TOGGLE_TASK
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            3000 + widgetId,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+        )
+    }
 }

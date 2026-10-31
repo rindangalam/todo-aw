@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,9 +7,10 @@ import '../../core/constants.dart';
 import '../../core/l10n/strings.dart';
 import '../../data/models/task.dart';
 import '../../providers/task_list_provider.dart';
+import '../../services/widget_bridge.dart';
 import '../widgets/error_state.dart';
 
-final trashListProvider = FutureProvider<List<Task>>((ref) {
+final trashListProvider = FutureProvider.autoDispose<List<Task>>((ref) {
   return ref.read(taskRepositoryProvider).getTrashed();
 });
 
@@ -116,6 +119,7 @@ class TrashScreen extends ConsumerWidget {
                                     .restore(task.uuid);
                                 ref.invalidate(trashListProvider);
                                 ref.invalidate(taskListProvider);
+                                unawaited(refreshWidgetsFromPrefs());
                               },
                             ),
                             IconButton(
@@ -160,6 +164,7 @@ class TrashScreen extends ConsumerWidget {
       await ref.read(taskRepositoryProvider).delete(task.uuid);
       ref.invalidate(trashListProvider);
       ref.invalidate(taskListProvider);
+      unawaited(refreshWidgetsFromPrefs());
     }
   }
 
@@ -185,6 +190,7 @@ class TrashScreen extends ConsumerWidget {
       await ref.read(taskRepositoryProvider).emptyTrash();
       ref.invalidate(trashListProvider);
       ref.invalidate(taskListProvider);
+      unawaited(refreshWidgetsFromPrefs());
     }
   }
 

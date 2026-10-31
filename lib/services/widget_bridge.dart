@@ -23,16 +23,14 @@ class WidgetBridge {
   static const List<String> widgetClassNames = [
     '$kWidgetPackageName.widget.TodayWidget',
     '$kWidgetPackageName.widget.DashboardWidget',
-    '$kWidgetPackageName.widget.CompactWidget',
     '$kWidgetPackageName.widget.PriorityWidget',
-    '$kWidgetPackageName.widget.QuickAddWidget',
     '$kWidgetPackageName.widget.NotesTodayWidget',
-    '$kWidgetPackageName.widget.QuickNoteWidget',
   ];
 
   static DateTime startOfDay(DateTime d) => DateTime(d.year, d.month, d.day);
 
-  static bool isSameDay(DateTime a, DateTime b) => startOfDay(a) == startOfDay(b);
+  static bool isSameDay(DateTime a, DateTime b) =>
+      startOfDay(a) == startOfDay(b);
 
   static String formatTime(DateTime? t) {
     if (t == null) return '';
@@ -44,19 +42,27 @@ class WidgetBridge {
     final s = startOfDay(day);
     return all.where((t) {
       if (t.isCompleted) return false;
+      if (t.deletedAt != null) return false;
+      if (t.isArchived) return false;
       if (t.dueDate == null) return false;
       return startOfDay(t.dueDate!) == s;
     }).toList()
       ..sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
   }
 
-  /// Includes completed for progress denominator.
+  /// Includes completed for progress denominator. Chronological, because both
+  /// the progress ring and the Today widget list read these in time order.
+  /// Trashed and archived tasks are excluded — they live in the Trash/Archive
+  /// screens, not on the home-screen widget.
   static List<Task> todayScope(List<Task> all, DateTime day) {
     final s = startOfDay(day);
     return all.where((t) {
+      if (t.deletedAt != null) return false;
+      if (t.isArchived) return false;
       if (t.dueDate == null) return false;
       return startOfDay(t.dueDate!) == s;
-    }).toList();
+    }).toList()
+      ..sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
   }
 
   static int progressFor(List<Task> all, DateTime day) {
@@ -145,7 +151,8 @@ class WidgetBridge {
     required bool isDark,
     required int accent,
   }) {
-    String hex(int argb) => argb.toRadixString(16).toUpperCase().padLeft(8, '0');
+    String hex(int argb) =>
+        argb.toRadixString(16).toUpperCase().padLeft(8, '0');
     final accentHex = hex(accent);
     if (isDark) {
       return {
@@ -193,29 +200,41 @@ class WidgetBridge {
     final next = nextTask(tasks);
     final todayNotes = notesToday(notes, day).take(4).toList();
 
-    final todayTaskJson = jsonEncode(todayPending.take(5).map((t) => {
-          'uuid': t.uuid,
-          'title': t.title,
-          'time': formatTime(t.dueDate),
-          'done': t.isCompleted,
-        }).toList());
+    // The Today widget scrolls (ListView + RemoteViewsService), so it ships the
+    // whole day instead of only the first 5 pending. `scope` is already
+    // chronological and keeps completed tasks in place, rendered struck-through
+    // by the widget — done-vs-not-done is then obvious at a glance.
+    // `todayPending` above keeps its narrower "still to do" meaning for the
+    // Dashboard stat.
+    final todayTaskJson = jsonEncode(scope
+        .map((t) => {
+              'uuid': t.uuid,
+              'title': t.title,
+              'time': formatTime(t.dueDate),
+              'done': t.isCompleted,
+            })
+        .toList());
 
-    final priorityJson = jsonEncode(priorities.map((t) => {
-          'uuid': t.uuid,
-          'title': t.title,
-          'time': formatTime(t.dueDate),
-          'level': priorityLevel(t),
-        }).toList());
+    final priorityJson = jsonEncode(priorities
+        .map((t) => {
+              'uuid': t.uuid,
+              'title': t.title,
+              'time': formatTime(t.dueDate),
+              'level': priorityLevel(t),
+            })
+        .toList());
 
-    final notesJson = jsonEncode(todayNotes.map((n) => {
-          'uuid': n.uuid,
-          'title': n.title,
-          'preview': notePreview(n.content),
-          'time': n.updatedAt.isAfter(n.createdAt)
-              ? formatTime(n.updatedAt)
-              : formatTime(n.createdAt),
-          'pinned': n.isPinned,
-        }).toList());
+    final notesJson = jsonEncode(todayNotes
+        .map((n) => {
+              'uuid': n.uuid,
+              'title': n.title,
+              'preview': notePreview(n.content),
+              'time': n.updatedAt.isAfter(n.createdAt)
+                  ? formatTime(n.updatedAt)
+                  : formatTime(n.createdAt),
+              'pinned': n.isPinned,
+            })
+        .toList());
 
     final progress =
         scope.isEmpty ? 0 : (completed * 100 / scope.length).round();
@@ -238,9 +257,6 @@ class WidgetBridge {
       'nextTaskUuid': next?.uuid ?? '',
       'greeting': greeting(now),
       'dateLabel': dateLabel(now),
-      'hasTodayTasks': todayPending.isEmpty ? '0' : '1',
-      'hasPriorityTasks': priorities.isEmpty ? '0' : '1',
-      'hasNotesToday': todayNotes.isEmpty ? '0' : '1',
     };
     payload.addAll(paletteHex(isDark: isDark, accent: accent));
     return payload;
