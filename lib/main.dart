@@ -64,7 +64,6 @@ void main() async {
   // Push home widget snapshot once app is ready (Android only).
   if (!kIsWeb) {
     await setupWidgetQuickInputChannel();
-    setupWidgetClickStream();
     unawaited(refreshWidgetsFromPrefs());
   }
 
@@ -90,9 +89,14 @@ void main() async {
   }
 
   final introSeen = await TourService.isIntroSeen();
-  final initialLocation = introSeen ? '/' : '/intro';
+  final widgetLocation = !kIsWeb ? await initialWidgetNotesLocation() : null;
+  final initialLocation = introSeen ? widgetLocation ?? '/' : '/intro';
 
   final router = appRouter(initialLocation: initialLocation);
+
+  if (!kIsWeb) {
+    setupWidgetClickStream(navigate: router.go);
+  }
 
   // Re-init notification service with router callback for tap handling
   try {

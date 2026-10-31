@@ -43,7 +43,8 @@ void applyWidgetUri(Uri? uri) {
   if (action.isEmpty) return;
   PendingWidgetAction.action = action;
   PendingWidgetAction.taskUuid = uri.queryParameters['uuid'];
-  PendingWidgetAction.noteUuid = uri.queryParameters['note_uuid'];
+  PendingWidgetAction.noteUuid = uri.queryParameters['note_uuid'] ??
+      (action == WidgetActions.openNote ? uri.queryParameters['uuid'] : null);
   if (!_widgetActionEvents.isClosed) _widgetActionEvents.add(null);
 }
 
@@ -62,20 +63,51 @@ const Set<String> _widgetActionNames = {
 /// Destinations for actions whose navigation matters; the rest land on `/`
 /// (the warm click stream opens sheets / performs the real navigation).
 const Map<String, String> _widgetActionRoutes = {
-  WidgetActions.openNotes: '/notes',
   WidgetActions.openDashboard: '/dashboard',
 };
+
+/// Notes navigation must work without HomeScreen being mounted. Accept the
+/// legacy `uuid` key too, since launchers may retain an older PendingIntent.
+String? widgetNotesLocation(Uri uri) {
+  if (uri.scheme.isNotEmpty &&
+      (uri.scheme != 'todoaw' || uri.host != 'widget')) {
+    return null;
+  }
+  if (uri.pathSegments.isEmpty) return null;
+  final action = uri.pathSegments.first;
+  if (action == WidgetActions.openNotes) return '/notes';
+  if (action != WidgetActions.openNote) return null;
+  final id = uri.queryParameters['note_uuid'] ?? uri.queryParameters['uuid'];
+  return id == null || id.isEmpty
+      ? '/notes'
+      : '/notes/${Uri.encodeComponent(id)}';
+}
+
+/// Warm widget clicks use the router directly for notes, rather than leaving
+/// a pending action that could be replayed the next time HomeScreen mounts.
+void handleWidgetClick(Uri? uri, {required void Function(String) navigate}) {
+  if (uri == null) return;
+  final location = widgetNotesLocation(uri);
+  if (location != null) {
+    navigate(location);
+  } else {
+    applyWidgetUri(uri);
+  }
+}
 
 /// GoRouter redirect guard: the Flutter engine feeds widget intent URIs into
 /// the router (cold start initial route = full `todoaw://widget/...`, warm
 /// `pushRouteInformation` = path-only `/toggle_task?...`). Full-form URIs only
-/// occur on cold start, so apply them here (the warm click stream covers
-/// path-only pushes). Path-only pushes are mapped to their real route so the
+/// occur on cold start. Notes go directly to their own routes; other actions
+/// are applied here (the warm click stream covers path-only pushes).
+/// Path-only pushes are mapped to their real route so the
 /// engine can never render the "Page Not Found" error — which would unmount
 /// HomeScreen and kill widget action handling. Both the redirect and the
 /// click stream converge on the same destination, so delivery order does not
 /// matter.
 String? widgetRedirect(Uri uri) {
+  final notesLocation = widgetNotesLocation(uri);
+  if (notesLocation != null) return notesLocation;
   if (uri.scheme == 'todoaw' && uri.host == 'widget') {
     applyWidgetUri(uri);
     return '/';

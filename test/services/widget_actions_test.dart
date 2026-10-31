@@ -23,6 +23,11 @@ void main() {
       expect(PendingWidgetAction.taskUuid, isNull);
     });
 
+    test('accepts legacy open_note uuid from existing widget intents', () {
+      applyWidgetUri(Uri.parse('todoaw://widget/open_note?uuid=n-legacy'));
+      expect(PendingWidgetAction.noteUuid, 'n-legacy');
+    });
+
     test('parses action without extras', () {
       applyWidgetUri(Uri.parse('todoaw://widget/open_notes'));
       expect(PendingWidgetAction.action, WidgetActions.openNotes);
@@ -61,6 +66,41 @@ void main() {
   });
 
   group('widgetRedirect', () {
+    test('cold notes clicks navigate directly without a pending Home action',
+        () {
+      expect(widgetRedirect(Uri.parse('todoaw://widget/open_notes')), '/notes');
+      expect(
+        widgetRedirect(Uri.parse('todoaw://widget/open_note?note_uuid=n-9')),
+        '/notes/n-9',
+      );
+      expect(PendingWidgetAction.action, isNull);
+    });
+
+    test('warm note pushes preserve the selected note, including legacy uuid',
+        () {
+      for (final key in ['note_uuid', 'uuid']) {
+        expect(widgetRedirect(Uri.parse('/open_note?$key=n-9')), '/notes/n-9');
+      }
+      expect(PendingWidgetAction.action, isNull);
+    });
+
+    test('missing note ID falls back to Notes, never Home', () {
+      expect(widgetRedirect(Uri.parse('todoaw://widget/open_note')), '/notes');
+      expect(widgetRedirect(Uri.parse('/open_note?uuid=')), '/notes');
+    });
+
+    test('note ID is encoded as one route segment', () {
+      expect(
+        widgetRedirect(Uri(
+          scheme: 'todoaw',
+          host: 'widget',
+          path: '/open_note',
+          queryParameters: {'note_uuid': 'note/with spaces'},
+        )),
+        '/notes/note%2Fwith%20spaces',
+      );
+    });
+
     test('full-form cold URI applies action and returns home', () {
       final redirect = widgetRedirect(
         Uri.parse('todoaw://widget/toggle_task?uuid=t-7'),
@@ -106,6 +146,32 @@ void main() {
         isNull,
       );
       expect(PendingWidgetAction.action, isNull);
+    });
+  });
+
+  group('handleWidgetClick', () {
+    test('navigates notes from any tab without a HomeScreen listener', () {
+      final destinations = <String>[];
+      for (final uri in [
+        'todoaw://widget/open_notes',
+        'todoaw://widget/open_note?uuid=n-old',
+        'todoaw://widget/open_note?note_uuid=n-new',
+      ]) {
+        handleWidgetClick(Uri.parse(uri), navigate: destinations.add);
+      }
+      expect(destinations, ['/notes', '/notes/n-old', '/notes/n-new']);
+      expect(PendingWidgetAction.action, isNull);
+    });
+
+    test('keeps task actions on the existing action stream', () {
+      final destinations = <String>[];
+      handleWidgetClick(
+        Uri.parse('todoaw://widget/open_task?uuid=t-1'),
+        navigate: destinations.add,
+      );
+      expect(destinations, isEmpty);
+      expect(PendingWidgetAction.action, WidgetActions.openTask);
+      expect(PendingWidgetAction.taskUuid, 't-1');
     });
   });
 }

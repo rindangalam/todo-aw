@@ -16,6 +16,7 @@ import 'screens/trash_screen.dart';
 import 'screens/archive_screen.dart';
 
 import 'widgets/intro_slides.dart';
+import 'widgets/note_form_sheet.dart';
 
 import '../core/l10n/strings.dart';
 import '../services/widget_actions.dart';
@@ -119,6 +120,18 @@ GoRouter appRouter({String initialLocation = '/splash'}) {
             path: '/notes',
             pageBuilder: (context, state) =>
                 _noTransition(const NotesScreen()),
+            routes: [
+              GoRoute(
+                path: ':noteId',
+                parentNavigatorKey: _rootNavigatorKey,
+                pageBuilder: (context, state) => _slideFromRight(
+                  NoteFormSheet(
+                    key: ValueKey(state.params['noteId']),
+                    noteId: state.params['noteId'],
+                  ),
+                ),
+              ),
+            ],
           ),
           GoRoute(
             path: '/settings',

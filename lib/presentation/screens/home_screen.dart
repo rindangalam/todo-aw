@@ -22,7 +22,6 @@ import '../widgets/error_state.dart';
 import '../../providers/task_list_provider.dart';
 import '../../services/tour_service.dart';
 import '../../services/widget_actions.dart';
-import '../widgets/note_form_sheet.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/home_hero.dart';
@@ -89,7 +88,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         if (uuid != null) showTaskFormSheet(context, taskId: uuid);
         break;
       case WidgetActions.openNote:
-        if (noteUuid != null) showNoteFormSheet(context, noteId: noteUuid);
+        context.go(noteUuid == null || noteUuid.isEmpty
+            ? '/notes'
+            : '/notes/${Uri.encodeComponent(noteUuid)}');
         break;
       case WidgetActions.openNotes:
         context.go('/notes');

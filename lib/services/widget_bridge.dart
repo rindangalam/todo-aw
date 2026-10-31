@@ -315,14 +315,28 @@ Future<void> refreshWidgetsFromPrefs() async {
   } catch (_) {}
 }
 
+/// Read the launch intent once during bootstrap, before choosing the router's
+/// initial location. The warm click stream does not replay cold-start clicks.
+/// Do not call this on HomeScreen remounts: the native launch intent is sticky.
+Future<String?> initialWidgetNotesLocation() async {
+  try {
+    final uri = await HomeWidget.initiallyLaunchedFromHomeWidget();
+    return uri == null ? null : widgetNotesLocation(uri);
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Forward warm widget clicks (intent.data URIs delivered by home_widget's
-/// `widgetClicked` EventChannel) into [applyWidgetUri]. Call once at startup.
+/// `widgetClicked` EventChannel) into navigation/actions. Call once at startup.
 /// Never throws — home_widget is unavailable on web/tests.
-void setupWidgetClickStream() {
+void setupWidgetClickStream({required void Function(String) navigate}) {
   try {
     HomeWidget.widgetClicked.listen(
       (uri) {
-        if (uri != null && uri.hasScheme) applyWidgetUri(uri);
+        if (uri != null && uri.hasScheme) {
+          handleWidgetClick(uri, navigate: navigate);
+        }
       },
       onError: (Object _, StackTrace __) {},
     );

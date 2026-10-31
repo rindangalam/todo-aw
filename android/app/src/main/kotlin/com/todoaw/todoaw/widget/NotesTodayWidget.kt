@@ -64,15 +64,16 @@ class NotesTodayWidget : BaseWidgetProvider() {
                 rootId,
                 activityPending(
                     context, WidgetActionsNative.OPEN_NOTE,
-                    mapOf("uuid" to item.uuid),
+                    mapOf("note_uuid" to item.uuid),
                 ),
             )
         }
 
-        views.setOnClickPendingIntent(
-            R.id.widget_notes_today_date,
-            activityPending(context, WidgetActionsNative.OPEN_NOTES),
-        )
+        val openNotes = activityPending(context, WidgetActionsNative.OPEN_NOTES)
+        views.setOnClickPendingIntent(R.id.widget_notes_today_root, openNotes)
+        views.setOnClickPendingIntent(R.id.widget_notes_today_header, openNotes)
+        views.setOnClickPendingIntent(R.id.widget_notes_today_date, openNotes)
+        views.setOnClickPendingIntent(R.id.widget_notes_today_empty, openNotes)
     }
 
     private fun resId(context: Context, name: String): Int =
